@@ -181,14 +181,12 @@ describe("AuditoriaConjuntoForm", () => {
       expect(botonEnviar()).toHaveTextContent("Enviar auditoría");
     });
 
-    // ¿Qué? Hallazgo de esta tarjeta: quitar una foto rompe el formulario.
-    // ¿Para qué? Las miniaturas se dibujan con `previews.map` y leen `evidencias[i].name`;
-    //           al quitar una foto, `evidencias` ya está actualizada pero `previews` se
-    //           recalcula un render después (useEffect), y en ese render `evidencias[i]`
-    //           es undefined (AuditoriaConjuntoForm.tsx:288).
-    // ¿Impacto? Se deja en skip hasta que una tarjeta `fix/` aparte lo corrija; al
-    //           corregirlo, quitar el skip: el test ya describe el comportamiento esperado.
-    it.skip("vuelve a deshabilitarse si se quita la única foto (bug conocido: el formulario se rompe)", async () => {
+    // ¿Qué? Quitar una foto no debe romper el formulario (defecto D-36, issue #685).
+    // ¿Para qué? Antes las miniaturas salían de dos listas (fotos y enlaces) que se
+    //           actualizaban en momentos distintos; al quitar una foto el formulario se caía.
+    //           Ahora foto y enlace van en el mismo par.
+    // ¿Impacto? Sin esta prueba, volver a separar las dos listas rompería el formulario sin aviso.
+    it("vuelve a deshabilitarse si se quita la única foto", async () => {
       const user = userEvent.setup();
       const { container } = renderFormulario();
       await completarFormulario(user, container);
@@ -196,6 +194,42 @@ describe("AuditoriaConjuntoForm", () => {
       await user.click(screen.getByRole("button", { name: "Quitar esta foto" }));
 
       expect(botonEnviar()).toBeDisabled();
+      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    });
+
+    it("al quitar una de dos fotos deja la otra con su miniatura y sigue habilitado", async () => {
+      const user = userEvent.setup();
+      const { container } = renderFormulario();
+      await completarFormulario(user, container);
+      const input = container.ownerDocument.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, crearFoto("segunda.png"));
+      expect(screen.getAllByRole("img")).toHaveLength(2);
+
+      await user.click(screen.getAllByRole("button", { name: "Quitar esta foto" })[0]);
+
+      expect(screen.getAllByRole("img")).toHaveLength(1);
+      expect(screen.getByRole("img")).toHaveAttribute("alt", "segunda.png");
+      expect(botonEnviar()).toBeEnabled();
+    });
+
+    it("libera el enlace de la foto que se quita", async () => {
+      const user = userEvent.setup();
+      const { container } = renderFormulario();
+      await completarFormulario(user, container);
+
+      await user.click(screen.getByRole("button", { name: "Quitar esta foto" }));
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+    });
+
+    it("libera los enlaces de las fotos que quedan al cerrar el formulario", async () => {
+      const user = userEvent.setup();
+      const { container, unmount } = renderFormulario();
+      await completarFormulario(user, container);
+
+      unmount();
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
     });
 
     it("no llama a la API si se intenta enviar incompleto", async () => {

@@ -10,7 +10,7 @@
  * ¿Impacto? Es el primer formulario de la app que sube archivos — usa
  *           FormData/multipart en vez de JSON (ver auditoriaConjuntoApi.ts).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Camera, ClipboardCheck, Plus, X } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
@@ -27,6 +27,16 @@ import { AUDITORIA_DESCRIPCION_MAX_LENGTH } from "@/lib/validacion";
 import { Button } from "@/components/ui/Button";
 
 const MAXIMO_FOTOS = 3;
+
+// ¿Qué? Una foto elegida junto con su enlace de vista previa (blob:).
+// ¿Para qué? Antes eran dos listas separadas (evidencias y previews) que se actualizaban en
+//           momentos distintos: al quitar una foto, por un instante tenían distinta cantidad
+//           de elementos y el formulario se caía (defecto D-36).
+// ¿Impacto? Foto y enlace viajan en el mismo par, así que nunca pueden quedar desfasados.
+interface FotoEvidencia {
+  archivo: File;
+  url: string;
+}
 
 interface ConjuntoOption {
   id_conjunto_residencial: string;
@@ -55,8 +65,7 @@ export function AuditoriaConjuntoForm({
   const [temas, setTemas] = useState<string[]>([]);
   const [tema, setTema] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [evidencias, setEvidencias] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [fotos, setFotos] = useState<FotoEvidencia[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [progreso, setProgreso] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -66,25 +75,38 @@ export function AuditoriaConjuntoForm({
   //       ya creada).
   const [confirmando, setConfirmando] = useState(false);
 
-  // ¿Qué? URLs de vista previa (blob:) para las fotos ya elegidas.
-  // ¿Para qué? Antes el formulario solo mostraba el nombre del archivo —
-  //           el reciclador no tenía forma de confirmar que la foto
-  //           elegida era la correcta antes de enviarla.
-  // ¿Impacto? Cada URL se libera (revokeObjectURL) al reemplazar la lista
-  //           o al cerrar el formulario, para no dejar memoria reservada.
+  // ¿Qué? Guarda siempre la lista de fotos más reciente en una variable que no provoca
+  //       que el formulario se vuelva a ejecutar (useRef), y al cerrar el formulario
+  //       libera los enlaces (revokeObjectURL) de las fotos que quedaban.
+  // ¿Para qué? Cuando el formulario se cierra, React descarta la lista `fotos`, pero la
+  //           memoria que el navegador reservó para cada enlace sigue ocupada hasta que
+  //           se cierra la pestaña. La limpieza necesita leer la lista final, por eso la
+  //           copia en la variable.
+  // ¿Impacto? Sin esto, cada auditoría abierta dejaba memoria reservada sin uso.
+  const fotosRef = useRef<FotoEvidencia[]>([]);
   useEffect(() => {
-    const urls = evidencias.map((archivo) => URL.createObjectURL(archivo));
-    setPreviews(urls);
-    return () => urls.forEach((url) => URL.revokeObjectURL(url));
-  }, [evidencias]);
+    fotosRef.current = fotos;
+  }, [fotos]);
+  useEffect(() => {
+    return () => fotosRef.current.forEach((foto) => URL.revokeObjectURL(foto.url));
+  }, []);
 
+  // ¿Qué? El enlace de vista previa se crea aquí, en el momento en que el usuario elige
+  //       la foto, y solo para las fotos que caben (máximo 3).
+  // ¿Para qué? Crear un enlace reserva memoria del navegador: es una acción, y el lugar
+  //           correcto para una acción es la respuesta a un clic, no el cálculo de la pantalla.
+  // ¿Impacto? No se crean enlaces para fotos que se descartan por pasar del máximo.
   const agregarFotos = (archivos: File[]) => {
-    if (archivos.length === 0) return;
-    setEvidencias((prev) => [...prev, ...archivos].slice(0, MAXIMO_FOTOS));
+    const nuevas = archivos
+      .slice(0, MAXIMO_FOTOS - fotos.length)
+      .map((archivo) => ({ archivo, url: URL.createObjectURL(archivo) }));
+    if (nuevas.length === 0) return;
+    setFotos((prev) => [...prev, ...nuevas]);
   };
 
   const quitarFoto = (indice: number) => {
-    setEvidencias((prev) => prev.filter((_, i) => i !== indice));
+    URL.revokeObjectURL(fotos[indice].url);
+    setFotos((prev) => prev.filter((_, i) => i !== indice));
   };
 
   // ¿Qué? Mismas categorías que ya usa CatalogoEducativoPage — se derivan
@@ -104,7 +126,7 @@ export function AuditoriaConjuntoForm({
   // ¿Qué? Mismas condiciones que ya revisaba "enviar" al hacer clic, pero
   //       calculadas ANTES, para deshabilitar el botón en vez de dejar que
   //       el reciclador se entere del campo que falta después de intentar.
-  const formularioIncompleto = !idConjunto || !nivel || !tema || evidencias.length === 0;
+  const formularioIncompleto = !idConjunto || !nivel || !tema || fotos.length === 0;
 
   const intentarEnviar = () => {
     setError(null);
@@ -120,7 +142,7 @@ export function AuditoriaConjuntoForm({
       setError(t("dashboards.reciclador.auditoria.validation.tema"));
       return;
     }
-    if (evidencias.length === 0) {
+    if (fotos.length === 0) {
       setError(t("dashboards.reciclador.auditoria.validation.evidencia"));
       return;
     }
@@ -139,7 +161,7 @@ export function AuditoriaConjuntoForm({
           nivel_desempeno: nivel,
           tema_educativo: tema,
           descripcion: descripcion.trim() || undefined,
-          evidencias,
+          evidencias: fotos.map((foto) => foto.archivo),
         },
         setProgreso
       );
@@ -308,11 +330,11 @@ export function AuditoriaConjuntoForm({
             {t("dashboards.reciclador.auditoria.evidenciaLabel")}
           </label>
 
-          {previews.length > 0 && (
+          {fotos.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
-              {previews.map((url, i) => (
-                <div key={url} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-200 dark:border-night-line">
-                  <img src={url} alt={evidencias[i].name} className="h-full w-full object-cover" />
+              {fotos.map((foto, i) => (
+                <div key={foto.url} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-200 dark:border-night-line">
+                  <img src={foto.url} alt={foto.archivo.name} className="h-full w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => quitarFoto(i)}
@@ -327,10 +349,10 @@ export function AuditoriaConjuntoForm({
             </div>
           )}
 
-          {evidencias.length < MAXIMO_FOTOS ? (
+          {fotos.length < MAXIMO_FOTOS ? (
             <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-edge px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-night-edge dark:text-gray-300">
-              {evidencias.length === 0 ? <Camera className="icon-md shrink-0" /> : <Plus className="icon-md shrink-0" />}
-              {evidencias.length === 0
+              {fotos.length === 0 ? <Camera className="icon-md shrink-0" /> : <Plus className="icon-md shrink-0" />}
+              {fotos.length === 0
                 ? t("dashboards.reciclador.auditoria.evidenciaHint")
                 : t("dashboards.reciclador.auditoria.evidenciaAgregarOtra")}
               <input
