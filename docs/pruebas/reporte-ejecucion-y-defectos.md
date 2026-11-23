@@ -30,6 +30,8 @@
 | E2E (`playwright`) | 2 | 2 | 0 | 0 | — |
 | **Total automatizadas** | **2138** | **2137** | **0** | **1** | |
 
+La prueba omitida del frontend era la del defecto D-36. Se activó al corregirlo (sección 3.2), después de esta ejecución.
+
 Verificaciones estáticas: `ruff`, `tsc` y `eslint` sin errores. Los umbrales de cobertura se cumplieron en las dos capas (backend ≥ 97 %; frontend ≥ 89 % de líneas). El detalle por archivo y la tabla de 42 casos están en el [informe de pruebas automatizadas](informe-pruebas-automatizadas.md).
 
 ### 1.2 Comandos ejecutados
@@ -69,22 +71,22 @@ Misma escala del [plan de pruebas](plan-de-pruebas.md), sección 8.
 
 ### 3.1 Resumen
 
-- **Defectos cerrados registrados: 35**, de los 107 PR de ramas `fix/` integrados a `develop` hasta hoy. Se eligieron 35 que corrigen un defecto real, repartidos por tipo y por severidad. Los demás PR `fix/` incluyen más correcciones del mismo tipo, además de refactorizaciones y ajustes de diseño; no se listan todos para que el registro sea legible.
-- **Defectos abiertos: 1** (D-36, sección 3.3).
-- Los demás issues abiertos en GitHub son tareas de funcionalidad, documentación, pruebas del bootcamp y mantenimiento; **ninguno** es un defecto, salvo el D-36, que está registrado en el issue [#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685) con la etiqueta `error`.
+- **Defectos cerrados registrados: 36.** Son 35 elegidos de los 107 PR de ramas `fix/` integrados a `develop` hasta el 20 de noviembre de 2026, que corrigen un defecto real y están repartidos por tipo y por severidad, más el D-36, corregido en el PR #693. Los demás PR `fix/` incluyen más correcciones del mismo tipo, además de refactorizaciones y ajustes de diseño; no se listan todos para que el registro sea legible.
+- **Defectos abiertos: 0.** El D-36 (issue [#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685)) fue el único abierto el 20 de noviembre y ya está cerrado.
+- Los demás issues abiertos en GitHub son tareas de funcionalidad, documentación, pruebas del bootcamp y mantenimiento; **ninguno** es un defecto.
 
 | Severidad | Cerrados | Abiertos |
 |---|---|---|
 | Crítica | 1 | 0 |
-| Alta | 17 | 1 |
+| Alta | 18 | 0 |
 | Media | 14 | 0 |
 | Baja | 3 | 0 |
-| **Total** | **35** | **1** |
+| **Total** | **36** | **0** |
 
 | Tipo | Cerrados |
 |---|---|
 | Seguridad | 14 |
-| Funcional | 10 |
+| Funcional | 11 |
 | Integridad de datos | 4 |
 | Accesibilidad | 2 |
 | Interfaz | 2 |
@@ -133,22 +135,17 @@ Ordenados por fecha de corrección. Cada fila enlaza al PR que lo corrigió e in
 | D-33 | [#468](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/468) | 2026-10-19 | Interfaz | Frontend | Mala adaptación a celular y tableta: menú, textos cortados y áreas táctiles menores a 44 px. | Media | Cerrado |
 | D-34 | [#498](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/498) | 2026-10-22 | Funcional | Backend | Las semanas del Administrador del Sistema se cortaban en hora UTC y no en hora de Bogotá. | Media | Cerrado |
 | D-35 | [#650](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/650) | 2026-11-12 | Integridad de datos | Backend | Una migración repetía el id de otra y rompía `alembic upgrade head` en una base nueva; se agregó una prueba de la cadena de migraciones. | Alta | Cerrado |
+| D-36 | [#693](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/693) | 2026-11-23 | Funcional | Frontend | Al quitar una foto de evidencia en el formulario de auditoría del Reciclador, el formulario se rompía: las fotos y sus enlaces de vista previa estaban en dos listas que se actualizaban en momentos distintos, y por un instante el código leía el nombre de una foto que ya no existía. Ahora cada foto va en un solo par con su enlace, y se agregaron pruebas. | Alta | Cerrado |
+
+D-36 se detectó el 1 de noviembre de 2026 al escribir las pruebas del formulario, que dejaron la prueba «vuelve a deshabilitarse si se quita la única foto» en `it.skip`. Se registró en el issue [#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685) y era el único defecto abierto del reporte de ejecución del 20 de noviembre. Al corregirlo se quitó el `skip` y se agregaron 3 pruebas (`fe/src/__tests__/components/AuditoriaConjuntoForm.test.tsx`).
 
 ### 3.3 Defectos abiertos
 
-| ID | Fecha en que se detectó | Tipo | Capa | Defecto | Severidad | Estado |
-|---|---|---|---|---|---|---|
-| D-36 | 1 de noviembre de 2026 | Funcional | Frontend | Al **quitar una foto de evidencia** en el formulario de auditoría del Reciclador, el formulario se rompe: las miniaturas se redibujan con la lista de vistas previas, que se recalcula un render después de actualizar la lista de fotos, y en ese render se lee el nombre de una foto que ya no existe (`alt={evidencias[i].name}` en `fe/src/components/AuditoriaConjuntoForm.tsx`). | Alta | Abierto ([#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685)) |
-
-**Cómo se detectó:** al escribir las pruebas del formulario, que dejaron la prueba «vuelve a deshabilitarse si se quita la única foto» en `it.skip`, con el comentario del defecto (`fe/src/__tests__/components/AuditoriaConjuntoForm.test.tsx`).
-
-**Por qué es Alta:** el formulario de auditoría es el flujo principal del Reciclador, y quitar una foto es una acción normal (por ejemplo, para cambiarla por otra).
-
-**Seguimiento:** issue [#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685), abierto el 21 de noviembre de 2026 con la etiqueta `error`, severidad Alta y estado Abierto. **Qué falta:** corregirlo en una rama `fix/` y quitar el `skip` de la prueba, que ya describe el comportamiento esperado. Al integrarse el PR, el defecto pasa a Cerrado.
+No hay defectos abiertos.
 
 ### 3.4 Alcance y límites de este registro
 
 - Las severidades de la sección 3.2 se asignaron a partir de la descripción de cada corrección y de la escala de la sección 2, y el equipo las **revisó y confirmó el 20 de noviembre de 2026**. La escala separa las fallas de seguridad que exponen cuentas o datos (Alta) de los refuerzos de seguridad sin riesgo directo (Media, como D-04, D-30 y D-32).
-- Los 35 defectos cerrados son una selección. El historial completo está en los PR de ramas `fix/` de [GitHub](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pulls?q=is%3Apr+is%3Amerged+head%3Afix%2F).
-- Los 35 defectos cerrados se armaron desde el historial de PR integrados; el defecto abierto (D-36) está en un issue con la etiqueta `error`. GitHub tiene además 10 issues cerrados con esa etiqueta.
+- Los 36 defectos cerrados son una selección. El historial completo está en los PR de ramas `fix/` de [GitHub](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pulls?q=is%3Apr+is%3Amerged+head%3Afix%2F).
+- Los 35 primeros defectos cerrados se armaron desde el historial de PR integrados; el D-36 se registró primero como issue con la etiqueta `error` y se cerró con el PR #693. GitHub tiene además 10 issues cerrados con esa etiqueta.
 - El seguimiento de defectos se hace con GitHub: issues, PR y el tablero del proyecto.

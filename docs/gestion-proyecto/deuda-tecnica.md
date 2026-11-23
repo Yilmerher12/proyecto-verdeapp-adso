@@ -21,7 +21,7 @@
 
 | Prioridad | Cuántas | Qué significa |
 |---|---|---|
-| **Must (P0)** | 3 | Hay que resolverlas antes de entregar o de desplegar |
+| **Must (P0)** | 2 | Hay que resolverlas antes de entregar o de desplegar |
 | **Should (P1)** | 8 | Mejoran de forma clara la calidad, sin urgencia |
 | **Could (P2)** | 3 | Pulido y funcionalidad opcional |
 
@@ -33,7 +33,6 @@ El tamaño es una estimación a ojo, como en el resto de las tarjetas.
 
 | ID | Qué falta | Por qué importa | Dónde se ve | Importancia | Complejidad | Tamaño |
 |---|---|---|---|---|---|---|
-| DT-01 | **El formulario de auditoría se rompe al quitar una foto** de evidencia | Es el flujo principal del Reciclador y quitar una foto es una acción normal | Issue [#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685), defecto D-36 y una prueba marcada como omitida en `fe/src/__tests__/components/AuditoriaConjuntoForm.test.tsx` | Alta | Baja | S |
 | DT-02 | **Seguridad de la infraestructura antes de desplegar:** el `docker-compose.yml` trae las credenciales de la base escritas y publica Mailpit; `fe/nginx.conf` no tiene HTTPS ni cabeceras de seguridad (CSP, HSTS); las imágenes no están fijadas por digest | Mientras todo corre en local no es un riesgo, pero un despliegue real las dejaría expuestas | Issue [#317](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/317) y [despliegue, sección 7](../despliegue.md) | Alta | Media | L |
 | DT-03 | **No hay despliegue real:** ni servidor, ni dominio, ni proceso de entrega, ni etiquetas de versión | El proyecto no se puede usar fuera de la máquina del equipo | [Despliegue](../despliegue.md) y `git tag`, que sale vacío | Alta | Media | L |
 
@@ -75,7 +74,8 @@ La deuda también se paga. De la lista original de seguridad de infraestructura 
 - **Los contenedores del backend corren sin root** y con `HEALTHCHECK` (D-09).
 - **Las cabeceras de seguridad** de la API (`X-Frame-Options`, `nosniff`, `Referrer-Policy`) y los límites de peticiones en los endpoints sensibles.
 - **La política de retención de fotos de evidencia** tiene su comando de limpieza (`app.limpiar_evidencias`).
+- **El formulario de auditoría ya no se rompe al quitar una foto de evidencia** (issue #685, defecto D-36, PR #693). Era el punto DT-01 de la lista Must; los demás puntos conservan su número.
 
 ## 5. Cómo se comprobó
 
-Cada punto se contrastó con el código o con el issue indicado: el comportamiento de `/health`, de `nginx.conf`, de `Limiter` y de CORS se leyó en el código; los issues #317, #330, #331, #332, #555, #597, #666 y #685 están abiertos en GitHub; y las protecciones de rama se consultaron con `gh api`.
+Cada punto se contrastó con el código o con el issue indicado: el comportamiento de `/health`, de `nginx.conf`, de `Limiter` y de CORS se leyó en el código; los issues #317, #330, #331, #332, #555, #597 y #666 están abiertos en GitHub; y las protecciones de rama se consultaron con `gh api`.
