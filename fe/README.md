@@ -173,6 +173,11 @@ desarrollo (`http://localhost:8000`) y producción (`https://api.mi-empresa.com`
 Si la URL estuviera hardcodeada en el código, habría que modificar el código fuente
 para cada entorno. Las variables de entorno resuelven eso.
 
+> **Con Docker:** `VITE_API_URL` se escribe dentro del JavaScript al **compilar**, no al
+> arrancar el contenedor. Para otra dirección se pasa al construir la imagen
+> (`VITE_API_URL=https://api.ejemplo.com docker compose build verde_fe`). Ver
+> [`docs/despliegue.md`](../docs/despliegue.md).
+
 ### Prefijo `VITE_`
 
 Vite expone al código frontend **solo** las variables que empiezan con `VITE_`.

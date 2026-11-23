@@ -2,6 +2,8 @@
 
 > **Nota (2026-09-08)**: este diagrama estaba muy desactualizado — solo documentaba 16 de las 22 tablas reales (le faltaban `auditorias_conjunto`, `comunicados`, `novedades`, `solicitudes_desvinculacion`, `password_reset_tokens`, `email_verification_tokens`, `tokens_revocados`), y todos los IDs seguían marcados como `INT` desde antes de cualquier migración a UUID. Se reconstruyó leyendo directamente `be/app/models/*.py`, mismo criterio que ya se había aplicado en `diagrama-clases.md` el 28 de agosto.
 
+> **Nota (2026-11-20)**: se comparó este diagrama, columna por columna y relación por relación, contra `Base.metadata` de SQLAlchemy (las 30 tablas de `be/app/models/`). Se agregó `usuarios.version_sesion`, `agenda_conjunto.archivado_en`, las 5 columnas del inventario ECA en `puntos_acopios` y la relación `usuarios` → `invitaciones_reciclador_conjunto`. El modelo relacional (llaves, tipos y restricciones) está en [`diagrama-mr.md`](diagrama-mr.md).
+
 El sistema permite:
 
 * Administrar usuarios y roles (Administrador del Sistema, Administrador de Conjunto, Reciclador, Residente).
@@ -57,6 +59,7 @@ erDiagram
         VARCHAR locale
         INT intentos_fallidos
         TIMESTAMP bloqueado_hasta
+        INT version_sesion
         VARCHAR foto_perfil_url
     }
 
@@ -116,6 +119,11 @@ erDiagram
         VARCHAR telefono_contacto
         VARCHAR url_foto
         BOOLEAN activo
+        VARCHAR numero_resolucion
+        VARCHAR organizacion
+        VARCHAR correo_contacto
+        NUMERIC latitud
+        NUMERIC longitud
     }
 
     PUNTOS_ACOPIO_COMENTARIOS {
@@ -209,6 +217,7 @@ erDiagram
         VARCHAR url_evidencia
         VARCHAR estado
         TIMESTAMP created_at
+        TIMESTAMP archivado_en
     }
 
     NOVEDADES_ENVIADAS {
@@ -327,6 +336,7 @@ erDiagram
     USUARIOS ||--o{ PASSWORD_RESET_TOKENS : solicita
     USUARIOS ||--o{ EMAIL_VERIFICATION_TOKENS : solicita
     USUARIOS ||--o{ INVITACIONES_ADMIN_CONJUNTO : invita
+    USUARIOS ||--o{ INVITACIONES_RECICLADOR_CONJUNTO : invita_reciclador
     USUARIOS ||--o{ SOLICITUDES_DESVINCULACION : resuelve
     USUARIOS ||--o{ ARCHIVOS_SUBIDOS : sube
     USUARIOS ||--o{ NOVEDADES : publica
@@ -485,7 +495,10 @@ CONTENIDO_EDUCATIVO ──▶ CONTENIDO_EDUCATIVO_VISTOS ◀── USUARIOS (qu�
 | locale             | VARCHAR   |
 | intentos_fallidos  | INT       |
 | bloqueado_hasta    | TIMESTAMP |
+| version_sesion     | INT       |
 | foto_perfil_url    | VARCHAR   |
+
+`version_sesion` es un contador que sube cada vez que el usuario cambia o restablece su contraseña (issue #308). Cada JWT lleva la versión vigente al emitirse y se rechaza si ya no coincide, así que cambiar la contraseña cierra las sesiones abiertas en otros equipos.
 
 `is_active` refleja si el correo ya fue verificado al registrarse; `habilitado` es un interruptor manual aparte, que solo el Admin Sistema puede apagar (RQF: gestión de usuarios). Una cuenta puede tener `is_active = true` y `habilitado = false` — no puede iniciar sesión de todas formas. Al desactivarla se guardan `fecha_desactivacion` y `motivo_desactivacion` (opcional, máx. 200 caracteres); al reactivarla se borran.
 
