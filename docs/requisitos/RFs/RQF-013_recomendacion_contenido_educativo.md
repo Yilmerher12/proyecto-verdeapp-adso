@@ -86,6 +86,8 @@ Este RF extiende **RQF-009** (Auditoría de Residuos con Semáforo) y **RQF-004*
 - RN-007: Un conjunto sin Residentes registrados puede recibir un envío manual igualmente (queda guardado el registro), pero no genera ninguna notificación — no hay a quién notificar. **Implementado.**
 - RN-008: En un mismo envío manual, un conjunto repetido en la lista cuenta una sola vez (un solo registro y una sola notificación), y la lista acepta máximo 100 conjuntos — por encima de eso responde 422 (`CONJUNTOS_MAX_LENGTH` en `be/app/schemas/contenido_educativo.py`, issue #358). **Implementado.**
 
+- RN-009: El catálogo pasa de 6 a 8 categorías ([estructura propuesta](../../gestion-proyecto/estructura-contenido-educativo.md), issue #597). Las dos nuevas son **"Residuos peligrosos del hogar"** (se califica; su nombre corto para el Reciclador es "Peligrosos mezclados con las bolsas") y **"Aparatos, llantas y baterías"** (solo se lee, igual que "Economía circular y aprovechamiento", y está en `CATEGORIAS_NO_AUDITABLES`). Una categoría existe en el catálogo y en el desplegable de la auditoría solo cuando tiene al menos un módulo; por eso las dos nuevas aparecen cuando el issue #519 escriba su primer módulo. Además, el nombre corto de "Tipos de residuos y su preparación" pasó de "Cómo entregar el material" a "Cómo preparar el material". Los nombres reales de las 6 categorías originales no cambian, porque son el vínculo con las auditorías guardadas. **Estructura y preparación del frontend implementadas; módulos nuevos pendientes (#519).**
+
 ---
 
 ## Historias de usuario derivadas

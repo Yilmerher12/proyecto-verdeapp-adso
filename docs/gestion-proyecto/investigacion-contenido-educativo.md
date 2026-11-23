@@ -39,7 +39,7 @@ El seed trae **6 módulos**, uno por categoría de auditoría (`be/app/seed.py`,
 
 **Lo que no cubre:** pilas, aparatos electrónicos, bombillas, medicamentos vencidos, aceite de cocina usado, llantas, baterías de vehículos, envases de insecticidas, ropa, ni cómo se aprovechan los residuos orgánicos.
 
-**Tres cosas del seed actual que conviene revisar contra lo leído en esta investigación** (no se corrigen aquí):
+**Tres cosas del seed que se revisaron contra lo leído en esta investigación** (los puntos de los módulos 3 y 4 se corrigieron después en el issue #597; el texto de abajo es el hallazgo original):
 
 - **Módulo 3 (Ecopuntos).** Dice que son "cajas o puntos fijos" que rotan "semana a semana". La nota oficial del 3 de febrero de 2026 dice que cada zona se atiende **aproximadamente cada cuatro semanas** y no define si es un contenedor fijo o móvil. Tampoco dice "semana a semana" para un mismo lugar.
 - **Módulo 4 (recicladores).** Cita el Decreto 596 de 2016. Desde el Decreto 1381 de 2024 la exclusividad de las organizaciones de recicladores de oficio dura 15 años y el régimen cambió (sección 4.5).
@@ -239,9 +239,9 @@ Solo se pudo leer el **título** de cada enlace. YouTube no devolvió descripci�
 
 Estas tareas **no se hacen aquí**; cada una se abre como tarjeta aparte cuando el equipo decida:
 
-- Reorganizar los 6 módulos actuales y definir qué módulos nacen de cada uno.
-- Definir dónde viven los temas que hoy faltan (residuos especiales y orgánicos), porque no coinciden con las 6 categorías de auditoría.
-- Corregir lo que hoy dice el seed sobre Ecopuntos y recicladores (sección 2).
+- ~~Reorganizar los 6 módulos actuales y definir qué módulos nacen de cada uno.~~ **Hecho en el issue #597:** ver [estructura del contenido educativo](estructura-contenido-educativo.md).
+- ~~Definir dónde viven los temas que hoy faltan (residuos especiales y orgánicos).~~ **Hecho en el issue #597:** dos categorías nuevas, y los orgánicos en la bolsa verde de "Separación en la fuente".
+- ~~Corregir lo que hoy dice el seed sobre Ecopuntos y recicladores (sección 2).~~ **Hecho en el issue #597.**
 - Redactar los módulos nuevos (#519).
 - La pantalla "¿Dónde llevo cada cosa?" (tarjeta 9), que puede usar directamente la tabla de la sección 5.
 

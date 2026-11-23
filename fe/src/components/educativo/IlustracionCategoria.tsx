@@ -81,6 +81,25 @@ const ESCENAS: Record<string, Forma[]> = {
     fondo("M250 44l-26 44h52z", "#86d6a6"),
     fondo("M262 122c0-24 16-34 36-36 0 24-12 38-36 36z", "#3aa66c"),
   ],
+  // ¿Qué? Triángulo de advertencia con un envase caído al lado.
+  peligrosos: [
+    SUELO,
+    fondo("M160 22l62 106H98z", "#f2b84b"),
+    fondo(rect(154, 56, 12, 34, 5), "#26332c"),
+    fondo(circulo(160, 106, 7), "#26332c"),
+    fondo(rect(236, 92, 30, 36, 6), "#8fd3f4"),
+    fondo(rect(244, 82, 14, 12, 3), "#126749"),
+  ],
+  // ¿Qué? Llanta y batería con sus dos bornes.
+  aparatos: [
+    SUELO,
+    { d: circulo(100, 90, 34), fill: "none", stroke: "#26332c", sw: 16 },
+    fondo(circulo(100, 90, 9), "#b9c4cc"),
+    fondo(rect(180, 72, 90, 56, 6), "#5fbf86"),
+    fondo(rect(194, 62, 14, 12, 2), "#126749"),
+    fondo(rect(242, 62, 14, 12, 2), "#126749"),
+    fondo(rect(208, 96, 36, 8, 3), "#ffffff"),
+  ],
   generica: [
     SUELO,
     fondo(circulo(240, 44, 24), "#fde68a"),
@@ -98,6 +117,8 @@ const ESCENA_POR_CATEGORIA: Record<string, string> = {
   "Residuos de construcción y demolición": "escombros",
   "Economía circular y aprovechamiento": "circular",
   "Marco distrital y consumo responsable": "consumo",
+  "Residuos peligrosos del hogar": "peligrosos",
+  "Aparatos, llantas y baterías": "aparatos",
 };
 
 export function IlustracionCategoria({ categoria, className }: { categoria: string; className?: string }) {

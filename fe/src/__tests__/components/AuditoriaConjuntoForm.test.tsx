@@ -32,6 +32,9 @@ const CONTENIDO = [
   { modulo_categoria: "Tipos de residuos y su preparación" },
   { modulo_categoria: "Separación en la fuente y código de colores" },
   { modulo_categoria: "Economía circular y aprovechamiento" },
+  // ¿Qué? Las dos categorías nuevas de la tarjeta #597: una se califica y la otra solo se lee.
+  { modulo_categoria: "Residuos peligrosos del hogar" },
+  { modulo_categoria: "Aparatos, llantas y baterías" },
 ];
 
 const TEMA_ELEGIDO = "Tipos de residuos y su preparación";
@@ -54,7 +57,7 @@ function renderFormulario(props: Partial<React.ComponentProps<typeof AuditoriaCo
 // ¿Qué? Espera a que el desplegable de temas termine de cargarse del catálogo.
 // ¿Para qué? Si se elige un tema antes de que lleguen las opciones, selectOptions falla.
 async function esperarTemas() {
-  await screen.findByRole("option", { name: "Cómo entregar el material" });
+  await screen.findByRole("option", { name: "Cómo preparar el material" });
 }
 
 function botonEnviar() {
@@ -95,6 +98,14 @@ describe("AuditoriaConjuntoForm", () => {
       expect(screen.getByRole("radio", { name: "Malo" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Separación por colores de bolsa" })).toBeInTheDocument();
       expect(screen.queryByRole("option", { name: "Por qué es importante reciclar" })).not.toBeInTheDocument();
+    });
+
+    it("ofrece 'Peligrosos mezclados con las bolsas' y esconde 'Aparatos, llantas y baterías'", async () => {
+      renderFormulario();
+      await esperarTemas();
+
+      expect(screen.getByRole("option", { name: "Peligrosos mezclados con las bolsas" })).toBeInTheDocument();
+      expect(screen.queryByRole("option", { name: "Aparatos, llantas y baterías" })).not.toBeInTheDocument();
     });
 
     it("deja la lista de temas vacía (sin romperse) si el catálogo no carga", async () => {
@@ -243,7 +254,7 @@ describe("AuditoriaConjuntoForm", () => {
       await user.click(botonEnviar());
 
       expect(await screen.findByText("¿Enviar esta auditoría?")).toBeInTheDocument();
-      expect(screen.getByText("Vas a calificar Cómo entregar el material como Regular en Torres del Parque.")).toBeInTheDocument();
+      expect(screen.getByText("Vas a calificar Cómo preparar el material como Regular en Torres del Parque.")).toBeInTheDocument();
       expect(screen.getByText("Después de enviarla no podrás editarla.")).toBeInTheDocument();
       expect(mockCrearAuditoria).not.toHaveBeenCalled();
     });
