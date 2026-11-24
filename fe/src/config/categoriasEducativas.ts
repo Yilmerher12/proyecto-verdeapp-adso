@@ -1,6 +1,8 @@
 import {
+  BatteryCharging,
   BookOpen,
   HardHat,
+  TriangleAlert,
   Landmark,
   Warehouse,
   Package,
@@ -25,6 +27,8 @@ export const ICONOS_CATEGORIAS: Record<string, LucideIcon> = {
   "Economía circular y aprovechamiento": Repeat,
   "Residuos de construcción y demolición": HardHat,
   "Marco distrital y consumo responsable": Landmark,
+  "Residuos peligrosos del hogar": TriangleAlert,
+  "Aparatos, llantas y baterías": BatteryCharging,
 };
 
 export const ICONO_CATEGORIA_DEFAULT: LucideIcon = BookOpen;
@@ -43,7 +47,11 @@ export const ICONO_CATEGORIA_DEFAULT: LucideIcon = BookOpen;
 //           sin romper nada — mismo criterio que ICONOS_CATEGORIAS arriba.
 export const NOMBRE_SIMPLE_CATEGORIA: Record<string, string> = {
   "Separación en la fuente y código de colores": "Separación por colores de bolsa",
-  "Tipos de residuos y su preparación": "Cómo entregar el material",
+  // ¿Qué? Antes decía "Cómo entregar el material".
+  // ¿Para qué? Ese nombre se podía leer como "dónde entregar" o "qué bolsa usar", pero la lección
+  //           habla de cómo dejar limpio y seco cada material (decisión de la tarjeta #597).
+  // ¿Impacto? Solo cambia lo que ve el Reciclador en el desplegable, no el vínculo con las auditorías.
+  "Tipos de residuos y su preparación": "Cómo preparar el material",
   "Puntos limpios y Ecopuntos": "Objetos grandes (muebles, colchones)",
   "Residuos de construcción y demolición": "Escombros de obra o remodelación",
   // ¿Qué? Antes se llamaba "Consumir menos, botar menos" (decisión del
@@ -54,6 +62,10 @@ export const NOMBRE_SIMPLE_CATEGORIA: Record<string, string> = {
   //       del 2026-09-14, a pedido del usuario.
   "Marco distrital y consumo responsable": "Cantidad de basura generada",
   "Economía circular y aprovechamiento": "Por qué es importante reciclar",
+  // ¿Qué? El Reciclador sí puede ver pilas, jeringas o medicamentos mezclados en las bolsas.
+  // ¿Para qué? Protege su trabajo y evita que contaminen el material aprovechable.
+  // ¿Impacto? Aparece en el desplegable apenas exista un módulo de esta categoría (tarjeta #519).
+  "Residuos peligrosos del hogar": "Peligrosos mezclados con las bolsas",
 };
 
 // ¿Qué? Issue #4 (RQF-013) — de las 6 categorías del catálogo, esta 1 no
@@ -69,6 +81,10 @@ export const NOMBRE_SIMPLE_CATEGORIA: Record<string, string> = {
 // ¿Impacto? "Marco distrital y consumo responsable" (ahora "Cantidad de
 //           basura generada") salió de este set el 2026-09-14 — sí es
 //           observable comparando la cantidad de residuos entre visitas.
+// ¿Qué? "Aparatos, llantas y baterías" también es solo de lectura (tarjeta #597).
+// ¿Para qué? Se entregan en comercios y gestores autorizados, no en el cuarto de basuras:
+//           el Reciclador no tiene qué observar sobre ellos en una visita.
 export const CATEGORIAS_NO_AUDITABLES = new Set<string>([
   "Economía circular y aprovechamiento",
+  "Aparatos, llantas y baterías",
 ]);
