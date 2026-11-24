@@ -14,10 +14,10 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Yilmer Hernández Camargo (@Yilmerher12) | E2E ([#467](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/467)) | E2E ([#586](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/586)) | Front: ProfilePage ([#637](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/637)) | | | | | | |
-| Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | API ([#609](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/609)) | Front: LoginPage ([#614](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/614)) | | | | | | |
-| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD ([#592](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/592)) | Front: AceptarInvitacionPage ([#638](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/638), hecho por Yilmer) | | | | | | |
-| José Guerrero (@josperaes-dotcom) | E2E | Front | Front: InvitarAdminConjuntoForm ([#631](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/631), hecho por Yordan) | | | | | | |
+| Yilmer Hernández Camargo (@Yilmerher12) | E2E ([#467](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/467)) | E2E ([#586](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/586)) | Front: ProfilePage ([#637](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/637)) | | | Front | | | |
+| Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | API ([#609](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/609)) | Front: LoginPage ([#614](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/614)) | | | BD | | | |
+| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD ([#592](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/592)) | Front: AceptarInvitacionPage ([#638](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/638), hecho por Yilmer) | | | API | | | |
+| José Guerrero (@josperaes-dotcom) | E2E | Front | Front: InvitarAdminConjuntoForm ([#631](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/631), hecho por Yordan) | | | E2E | | | |
 
 ## Cobertura semanal
 
