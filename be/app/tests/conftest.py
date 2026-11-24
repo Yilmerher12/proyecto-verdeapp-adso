@@ -15,13 +15,17 @@ import logging
 import uuid
 from collections.abc import Generator
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.database import Base
+from app.config import settings
 from app.dependencies import get_db
 from app.main import app
 from app.models.usuario import Usuario
@@ -47,7 +51,29 @@ from app.utils.security import create_access_token, hash_password, hash_token
 #           REAL de desarrollo (verdeapp_db), donde viven los conjuntos,
 #           residentes y vistas SQL reales.
 # ¿Impacto? Esta BD de test se puede borrar y recrear sin ningún riesgo.
-TEST_DATABASE_URL = "postgresql+psycopg2://verde_user:verde_password@localhost:5433/verdeapp_test_db"
+#           La URL llega de be/.env o del entorno (TEST_DATABASE_URL), nunca
+#           escrita aquí. Sin ella, pytest se detiene antes de tocar ninguna BD.
+TEST_DATABASE_URL = settings.TEST_DATABASE_URL
+
+if not TEST_DATABASE_URL:
+    pytest.exit(
+        "Falta TEST_DATABASE_URL. Agrégala a be/.env (ver be/.env.example), "
+        "enciende la BD de pruebas con 'docker compose up -d --wait verde_db_test' "
+        "y vuelve a correr pytest.",
+        returncode=2,
+    )
+
+# ¿Qué? Salvaguarda: el nombre de la BD debe contener "_test".
+# ¿Para qué? El fixture setup_database() hace drop_all() sobre esta BD. Si alguien
+#           pone por error la URL de desarrollo en TEST_DATABASE_URL, se borrarían
+#           sus datos reales.
+# ¿Impacto? Con otro nombre, pytest se detiene sin tocar nada.
+if "_test" not in (make_url(TEST_DATABASE_URL).database or ""):
+    pytest.exit(
+        "TEST_DATABASE_URL debe apuntar a una BD cuyo nombre contenga '_test' "
+        "(ej. verdeapp_test_db). Las pruebas borran las tablas de esa BD.",
+        returncode=2,
+    )
 
 test_engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
 
@@ -63,143 +89,48 @@ TestSessionLocal = sessionmaker(
 # ────────────────────────────
 
 
-def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
-    """Crea vista_directorio_residentes y sp_obtener_recicladores.
+def _config_alembic() -> Config:
+    """Arma la configuración de Alembic apuntando a la BD de pruebas.
 
-    ¿Qué? Mismo SQL, palabra por palabra, que be/alembic/versions/
-          fb1891a1aa72_mover_vista_y_funcion_sql_del_panel_.py
-          (más las columnas nuevas de ed64a91d01f6, fecha y motivo de desactivación).
-    ¿Para qué? Issue #217 — esa vista y esa función ahora se crean vía
-              Alembic contra la BD real, pero setup_database() (abajo)
-              arma la BD de test con Base.metadata.create_all(), que
-              SOLO conoce tablas ORM — nunca ejecuta migraciones. Sin
-              esto, /vista-residentes y /sp-recicladores fallarían en
-              cada test con "relation/function does not exist".
-    ¿Impacto? Se corre una sola vez por sesión de pytest (mismo fixture
-              que siembra los roles), no en cada test individual.
+    ¿Qué? Una Config sin archivo alembic.ini, con la carpeta de migraciones y la URL de pruebas.
+    ¿Para qué? Correr las mismas migraciones que usa la BD real. Sin .ini, alembic/env.py no ejecuta
+               fileConfig(), que apagaría los loggers de la app y rompería las pruebas con caplog.
+    ¿Impacto? env.py respeta esta URL en vez de DATABASE_URL, así que nunca toca la BD de desarrollo.
     """
-    session.execute(text("""
-    CREATE OR REPLACE VIEW vista_directorio_residentes AS
-    SELECT
-        u.correo_electronico AS "Correo",
-        r.nombre AS "Nombre",
-        r.apellidos AS "Apellido",
-        r.numero_telefonico AS "Teléfono",
-        c.nombre_conjunto AS "Conjunto",
-        uni.torre AS "Bloque",
-        uni.apto AS "Apartamento",
-        l.id_localidad AS "id_localidad",
-        l.nombre_localidad AS "Localidad",
-        u.habilitado AS "Habilitado",
-        c.id_conjunto_residencial AS "id_conjunto_residencial",
-        u.fecha_desactivacion AS "Fecha_Desactivacion",
-        u.motivo_desactivacion AS "Motivo_Desactivacion"
-    FROM residentes r
-    JOIN usuarios u ON r.id_usuario = u.id_usuario
-    JOIN unidades uni ON r.id_unidad = uni.id_unidad
-    JOIN conjuntos_residenciales c ON uni.id_conjunto_residencial = c.id_conjunto_residencial
-    JOIN localidades l ON c.id_localidad = l.id_localidad;
-    """))
+    config = Config()
+    config.set_main_option("script_location", str(Path(__file__).resolve().parents[2] / "alembic"))
+    config.set_main_option("sqlalchemy.url", TEST_DATABASE_URL)
+    return config
 
-    session.execute(text("""
-    CREATE OR REPLACE FUNCTION sp_obtener_recicladores(
-        p_search TEXT DEFAULT NULL,
-        p_localidad_id INT DEFAULT NULL,
-        p_conjunto_id UUID DEFAULT NULL,
-        p_order_by TEXT DEFAULT 'nombre',
-        p_order_dir TEXT DEFAULT 'asc',
-        p_limit INT DEFAULT 20,
-        p_offset INT DEFAULT 0,
-        p_habilitado BOOLEAN DEFAULT NULL
-    )
-    RETURNS TABLE (
-        "Correo" VARCHAR,
-        "Nombre_Completo" VARCHAR,
-        "Asociacion" VARCHAR,
-        "id_localidad" INT,
-        "Localidad" VARCHAR,
-        "Habilitado" BOOLEAN,
-        "Fecha_Desactivacion" TIMESTAMPTZ,
-        "Motivo_Desactivacion" VARCHAR
-    ) AS $$
-    BEGIN
-        RETURN QUERY
-        SELECT
-            u.correo_electronico::VARCHAR,
-            (rec.nombre || ' ' || rec.apellidos)::VARCHAR,
-            rec.asociacion::VARCHAR,
-            l.id_localidad,
-            l.nombre_localidad::VARCHAR,
-            u.habilitado,
-            u.fecha_desactivacion,
-            u.motivo_desactivacion::VARCHAR
-        FROM recicladores rec
-        JOIN usuarios u ON rec.id_usuario = u.id_usuario
-        LEFT JOIN localidades l ON rec.localidad_id = l.id_localidad
-        WHERE (p_search IS NULL OR rec.nombre ILIKE '%' || p_search || '%'
-               OR rec.apellidos ILIKE '%' || p_search || '%'
-               OR u.correo_electronico ILIKE '%' || p_search || '%')
-          AND (p_localidad_id IS NULL OR rec.localidad_id = p_localidad_id)
-          AND (p_habilitado IS NULL OR u.habilitado = p_habilitado)
-          AND (p_conjunto_id IS NULL OR EXISTS (
-                SELECT 1 FROM recicladores_conjuntos rc2
-                WHERE rc2.id_reciclador = rec.id_reciclador
-                  AND rc2.id_conjunto_residencial = p_conjunto_id
-                  AND rc2.fecha_revocacion IS NULL
-              ))
-        ORDER BY
-            CASE WHEN p_order_dir = 'asc' THEN
-                CASE p_order_by
-                    WHEN 'correo' THEN u.correo_electronico
-                    WHEN 'asociacion' THEN rec.asociacion
-                    WHEN 'estado' THEN u.habilitado::TEXT
-                    ELSE rec.nombre
-                END
-            END ASC,
-            CASE WHEN p_order_dir = 'desc' THEN
-                CASE p_order_by
-                    WHEN 'correo' THEN u.correo_electronico
-                    WHEN 'asociacion' THEN rec.asociacion
-                    WHEN 'estado' THEN u.habilitado::TEXT
-                    ELSE rec.nombre
-                END
-            END DESC
-        LIMIT p_limit OFFSET p_offset;
-    END;
-    $$ LANGUAGE plpgsql;
-    """))
-    session.commit()
+
+def _vaciar_bd_de_pruebas() -> None:
+    """Borra TODO lo que haya en la BD de pruebas (tablas, vistas, funciones y alembic_version).
+
+    ¿Qué? Recrea el esquema "public" vacío.
+    ¿Para qué? Si una corrida anterior se cortó a mitad (Ctrl+C), la BD queda con restos y "alembic upgrade"
+               fallaría por "tabla ya existe". Empezar siempre de cero hace que cada sesión sea igual.
+    ¿Impacto? Seguro porque el nombre de la BD ya se validó arriba (debe contener "_test").
+    """
+    with test_engine.begin() as conexion:
+        conexion.execute(text("DROP SCHEMA public CASCADE"))
+        conexion.execute(text("CREATE SCHEMA public"))
 
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database() -> Generator[None, None, None]:
-    """Crea las tablas, siembra los roles obligatorios, y limpia al final.
+    """Arma la BD de pruebas con las migraciones de Alembic, siembra los roles y limpia al final.
 
-    ¿Qué? Además de crear la estructura de tablas, este fixture inserta
-          las 4 filas de la tabla "roles" que el esquema real exige
-          como referencia obligatoria (FK) en la tabla "usuarios", y crea
-          la vista/función SQL del panel de Admin del Sistema (ver
-          _crear_vista_y_funcion_panel_admin).
-    ¿Para qué? La BD de desarrollo siembra estos roles vía app/seed.py
-              (be/app/seed_data.sql) al levantar Docker — pero la BD de
-              TEST se crea limpia en cada sesión de pytest, solo con la
-              estructura. Sin esta siembra, cualquier fixture que cree
-              un Usuario con id_rol=2 (o cualquier rol) falla con
-              ForeignKeyViolation.
-    ¿Impacto? Se siembran los mismos 4 roles que existen en
-              be/app/seed_data.sql, para que el comportamiento de test
-              coincida con el real.
+    ¿Qué? Vacía la BD, corre "alembic upgrade head" (las mismas migraciones de la BD real, incluidas la vista
+          vista_directorio_residentes y la función sp_obtener_recicladores) e inserta las 4 filas de "roles".
+    ¿Para qué? Antes se usaba Base.metadata.create_all(), que arma las tablas desde los modelos y no desde las
+               migraciones: un modelo sin su migración pasaba todas las pruebas y fallaba en producción. Los
+               roles no los crea ninguna migración (los siembra app/seed.py en desarrollo); sin ellos, crear
+               un Usuario falla con ForeignKeyViolation.
+    ¿Impacto? Agrega unos segundos al inicio de la sesión. Si una migración está rota, toda la suite se detiene
+              ahí con el error de Alembic, que es justo lo que debe pasar.
     """
-    # ¿Qué? Issue #323: se borran la vista y la función ANTES de drop_all,
-    #       no solo al final de la sesión.
-    # ¿Para qué? Si una corrida se corta a mitad (Ctrl+C, cerrar la
-    #           terminal), el cleanup del final nunca corre: la vista queda
-    #           en la BD de pruebas y la siguiente corrida fallaba entera
-    #           con "cannot drop table residentes because other objects
-    #           depend on it" (460 errores, ninguna prueba ejecutada).
-    _borrar_vista_y_funcion_panel_admin()
-    Base.metadata.drop_all(bind=test_engine)
-    Base.metadata.create_all(bind=test_engine)
+    _vaciar_bd_de_pruebas()
+    command.upgrade(_config_alembic(), "head")
 
     with TestSessionLocal(bind=test_engine.connect()) as seed_session:
         from app.models.rol import Role, RolId
@@ -213,29 +144,9 @@ def setup_database() -> Generator[None, None, None]:
         seed_session.add_all(roles_seed)
         seed_session.commit()
 
-        _crear_vista_y_funcion_panel_admin(seed_session)
-
     yield
 
-    _borrar_vista_y_funcion_panel_admin()
-    Base.metadata.drop_all(bind=test_engine)
-
-
-def _borrar_vista_y_funcion_panel_admin() -> None:
-    """Borra la vista y la función SQL del panel de Admin.
-
-    ¿Qué? La vista depende de la tabla "residentes" (CREATE VIEW ... FROM
-          residentes ...) — sin borrarla primero, el DROP TABLE de
-          Base.metadata.drop_all() falla con "cannot drop table because
-          other objects depend on it". Mismo orden inverso que seguiría un
-          "alembic downgrade".
-    """
-    with TestSessionLocal(bind=test_engine.connect()) as cleanup_session:
-        cleanup_session.execute(text(
-            "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, UUID, TEXT, TEXT, INT, INT, BOOLEAN)"
-        ))
-        cleanup_session.execute(text("DROP VIEW IF EXISTS vista_directorio_residentes"))
-        cleanup_session.commit()
+    _vaciar_bd_de_pruebas()
 
 
 @pytest.fixture()

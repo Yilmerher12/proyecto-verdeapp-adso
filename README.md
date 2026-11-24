@@ -257,11 +257,7 @@ docker compose up -d verde_db
 docker ps
 ```
 
-**3. Recrear la base de datos de pruebas** (`pytest` usa una base aparte, `verdeapp_test_db`, que también se borró con el volumen):
-
-```bash
-docker exec verde_db psql -U verde_user -d verdeapp_db -c "CREATE DATABASE verdeapp_test_db OWNER verde_user;"
-```
+**3. La base de datos de pruebas no necesita nada.** `pytest` usa su propio contenedor (`verde_db_test`, puerto 5434), que no usa el volumen que acabas de borrar. Si no está encendido, mira la sección "Pruebas y cobertura" más abajo.
 
 **4. Borrar las fotos y adjuntos viejos** (en el Método B se guardan en `be/app/uploads/`, no en un volumen de Docker). Desde la raíz del proyecto, en PowerShell:
 
@@ -596,6 +592,28 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 | API e integración (BD real `verdeapp_test_db`) | `be/app/tests/` | `uv run pytest` desde `be/` |
 | Componentes React | `fe/src/__tests__/` | `pnpm test` desde `fe/` |
 | E2E (navegador real) | `e2e/tests/` | `pnpm test` desde `e2e/` |
+
+**BD de pruebas del backend** (contenedor `verde_db_test`, puerto 5434, sin volumen: no guarda nada al apagarse). Requiere `TEST_DATABASE_URL` en `be/.env` (el valor está en `be/.env.example`). Tres comandos, desde la raíz del proyecto:
+
+```bash
+docker compose up -d --wait verde_db_test
+```
+
+```bash
+cd be
+```
+
+```bash
+uv run pytest -q
+```
+
+Para apagarla y borrar todo rastro (desde la raíz):
+
+```bash
+docker compose down -v verde_db_test
+```
+
+Si `pytest` se detiene con "Falta TEST_DATABASE_URL", agrega esa variable a `be/.env`. Si falla con "connection refused" en el puerto 5434, enciende la BD con el primer comando.
 
 **Documentación de las pruebas** (`docs/pruebas/`): el [plan de pruebas](docs/pruebas/plan-de-pruebas.md) (alcance, niveles, ambiente y criterios), el [informe de pruebas automatizadas](docs/pruebas/informe-pruebas-automatizadas.md) (resultados y casos de una ejecución real) y el [reporte de ejecución y defectos](docs/pruebas/reporte-ejecucion-y-defectos.md) (defectos con su severidad y su estado).
 

@@ -63,6 +63,11 @@ jobs:
     #           que exige la validación en config.py para que la app arranque.
     env:
       DATABASE_URL: postgresql://verde_user:verde_password@localhost:5433/verdeapp_test_db
+      # ¿Qué? La conexión que usa pytest (be/app/tests/conftest.py la lee de aquí).
+      # ¿Para qué? Ya no está escrita dentro del archivo de test.
+      # ¿Impacto? En el CI sigue siendo el Postgres temporal de arriba (5433); en tu
+      #           equipo es verde_db_test (5434), definido en be/.env.
+      TEST_DATABASE_URL: postgresql+psycopg2://verde_user:verde_password@localhost:5433/verdeapp_test_db
       SECRET_KEY: solo-para-ci-nunca-se-usa-en-produccion-0000000000
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: "60"

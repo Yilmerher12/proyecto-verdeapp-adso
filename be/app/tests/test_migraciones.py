@@ -2,9 +2,11 @@
 
 ¿Qué? Revisan los archivos de migración sin tocar ninguna base de datos: que cada id sea único, que haya
       una sola migración final ("head") y que todas estén enlazadas en una sola cadena desde la primera.
-¿Para qué? Las demás pruebas arman la base con Base.metadata.create_all() y nunca corren migraciones, así que
-           un id repetido pasaba todas las pruebas y solo fallaba al correr `alembic upgrade head` en una base
-           nueva (le pasó a un compañero con los dos archivos `b1c2d3e4f5a6_...`, ids escritos a mano).
+¿Para qué? Antes las demás pruebas armaban la base con Base.metadata.create_all() y nunca corrían migraciones, así
+           que un id repetido pasaba todas las pruebas y solo fallaba al correr `alembic upgrade head` en una base
+           nueva (le pasó a un compañero con los dos archivos `b1c2d3e4f5a6_...`, ids escritos a mano). Hoy
+           conftest.py ya corre `alembic upgrade head` al empezar la sesión, pero estas pruebas siguen
+           nombrando el archivo exacto que está mal, que el error de Alembic no hace.
 ¿Impacto? Si alguien repite un id o deja dos cabezas, `pytest` falla y dice cuáles archivos son. Los ids de
           migración se generan con `alembic revision`, nunca a mano.
 """
