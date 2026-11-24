@@ -19,8 +19,10 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.config import settings
 from app.database import Base
 from app.dependencies import get_db
 from app.main import app
@@ -47,7 +49,29 @@ from app.utils.security import create_access_token, hash_password, hash_token
 #           REAL de desarrollo (verdeapp_db), donde viven los conjuntos,
 #           residentes y vistas SQL reales.
 # ¿Impacto? Esta BD de test se puede borrar y recrear sin ningún riesgo.
-TEST_DATABASE_URL = "postgresql+psycopg2://verde_user:verde_password@localhost:5433/verdeapp_test_db"
+#           La URL llega de be/.env o del entorno (TEST_DATABASE_URL), nunca
+#           escrita aquí. Sin ella, pytest se detiene antes de tocar ninguna BD.
+TEST_DATABASE_URL = settings.TEST_DATABASE_URL
+
+if not TEST_DATABASE_URL:
+    pytest.exit(
+        "Falta TEST_DATABASE_URL. Agrégala a be/.env (ver be/.env.example), "
+        "enciende la BD de pruebas con 'docker compose up -d --wait verde_db_test' "
+        "y vuelve a correr pytest.",
+        returncode=2,
+    )
+
+# ¿Qué? Salvaguarda: el nombre de la BD debe contener "_test".
+# ¿Para qué? El fixture setup_database() hace drop_all() sobre esta BD. Si alguien
+#           pone por error la URL de desarrollo en TEST_DATABASE_URL, se borrarían
+#           sus datos reales.
+# ¿Impacto? Con otro nombre, pytest se detiene sin tocar nada.
+if "_test" not in (make_url(TEST_DATABASE_URL).database or ""):
+    pytest.exit(
+        "TEST_DATABASE_URL debe apuntar a una BD cuyo nombre contenga '_test' "
+        "(ej. verdeapp_test_db). Las pruebas borran las tablas de esa BD.",
+        returncode=2,
+    )
 
 test_engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
 

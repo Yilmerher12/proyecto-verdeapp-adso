@@ -74,7 +74,7 @@ El ambiente de pruebas está separado del de desarrollo: una prueba nunca toca l
 
 | Aspecto | Desarrollo | Pruebas |
 |---|---|---|
-| Base de datos | `verdeapp_db`, en el contenedor `verde_db` | `verdeapp_test_db`, otra base en la misma instancia de PostgreSQL |
+| Base de datos | `verdeapp_db`, en el contenedor `verde_db` | `verdeapp_test_db`, en su propio contenedor `verde_db_test` (puerto 5434, sin volumen) |
 | Cómo se arma | Migraciones de Alembic y `app.seed` | `pytest` crea las tablas al empezar la sesión y las borra al terminar (`create_all` y `drop_all`); cada prueba corre dentro de una transacción que se revierte al final |
 | Datos | Cuentas de prueba, 6 módulos educativos, conjuntos y ECA reales (siembra) | Fixtures de `be/app/tests/conftest.py` (un usuario por rol y sus cabeceras de sesión) |
 | Correo | Mailpit (`verde_mailpit`): captura los correos, no salen a internet | Con el `.env.example` (`SMTP_HOST` apunta a Mailpit) los correos de las pruebas quedan en Mailpit. En el CI no hay proveedor de correo configurado y `be/app/utils/email.py` solo registra que no se envió |
@@ -86,7 +86,7 @@ Para producción, la variable `ENVIRONMENT` es obligatoria (el backend no arranc
 **Preparación** (una sola vez; está en el README y en `CLAUDE.md`):
 
 1. `docker compose up -d verde_db verde_mailpit`
-2. `docker exec verde_db psql -U verde_user -d verdeapp_db -c "CREATE DATABASE verdeapp_test_db OWNER verde_user;"`
+2. `docker compose up -d --wait verde_db_test` y la variable `TEST_DATABASE_URL` en `be/.env` (valor en `be/.env.example`). Postgres crea la base `verdeapp_test_db` solo.
 3. `uv sync` (backend) y `pnpm install` (frontend y e2e).
 
 ---
@@ -163,7 +163,7 @@ El registro de los defectos corregidos y de los abiertos está en el [reporte de
 |---|---|---|
 | Pocas pruebas E2E: hoy hay 2 flujos (login con credenciales incorrectas y panel del Residente con credenciales válidas), y no corren en el CI | Un fallo que solo aparece al juntar frontend, backend y base de datos puede pasar sin detectarse | Los flujos críticos se cubren a nivel de API y de componentes. La rotación del bootcamp contempla más E2E (issue #661) |
 | El frontend tiene menos cobertura que el backend | Más lógica de pantalla sin probar | El umbral sube cada semana; la matriz de rotación lista los archivos con menos cobertura |
-| Las pruebas del backend necesitan PostgreSQL | Si la base de pruebas no existe, toda la suite falla con `database "verdeapp_test_db" does not exist` | Está documentado en el README y en `CLAUDE.md`, y el CI crea la base solo |
+| Las pruebas del backend necesitan PostgreSQL | Si el contenedor `verde_db_test` está apagado, toda la suite falla con `connection refused` en el puerto 5434; si falta `TEST_DATABASE_URL`, `pytest` se detiene con un mensaje claro | Está documentado en el README y en `CLAUDE.md`, y el CI crea la base solo |
 | Pruebas intermitentes (por ejemplo, el candado de 2 horas del reciclador, corregida en el PR #327) | Falsos fallos que cuestan tiempo | Se corrigen como defecto, sin reintentos automáticos |
 | Sin pruebas de carga | No se conoce el límite de usuarios simultáneos | Fuera del alcance de esta etapa |
 | Alertas de dependencias ignoradas de forma temporal (por ejemplo `GHSA-fc5q-39xc-vjpf`, de `picomatch`) | Una vulnerabilidad conocida sin corregir | Está registrada y comentada en `fe/pnpm-workspace.yaml`; se revisa en cada actualización de dependencias |
