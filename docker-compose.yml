@@ -28,6 +28,33 @@ services:
     networks:
       - verde_network
 
+  # ¿Qué? Semana 6 del bootcamp: una BD de pruebas separada y desechable.
+  # ¿Para qué? Antes pytest usaba verdeapp_test_db dentro de verde_db (mismo
+  #           contenedor y puerto que desarrollo), y un "down -v" la borraba sin
+  #           que nada la recreara. Ahora Postgres la crea sola al arrancar.
+  # ¿Impacto? Puerto 5434 en tu equipo (el 5433 sigue siendo desarrollo). Sin
+  #           volumen y con tmpfs: al apagarla no queda ningún dato. Los tests
+  #           llegan por TEST_DATABASE_URL (be/.env).
+  verde_db_test:
+    image: postgres:17-alpine
+    container_name: verde_db_test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: verde_user
+      POSTGRES_PASSWORD: verde_password
+      POSTGRES_DB: verdeapp_test_db
+    ports:
+      - "127.0.0.1:5434:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verde_user -d verdeapp_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - verde_network
+
   verde_be:
     build:
       context: ./be
@@ -79,6 +106,15 @@ services:
     build:
       context: ./fe
       dockerfile: Dockerfile
+      # ¿Qué? Pasa VITE_API_URL al momento de compilar la imagen del frontend.
+      # ¿Para qué? Vite escribe esa dirección dentro del JavaScript al compilar; el
+      #           contenedor final es solo nginx y no lee fe/.env al arrancar, así
+      #           que cambiar fe/.env no cambiaba la dirección del backend.
+      # ¿Impacto? Sin definirla se usa http://localhost:8000, igual que antes. Para
+      #           otra dirección: VITE_API_URL=https://api.ejemplo.com docker compose
+      #           build verde_fe (ver docs/despliegue.md).
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     container_name: verde_fe
     restart: unless-stopped
     env_file:

@@ -5,7 +5,7 @@
 > ⚠️ **Nota sobre la numeración**: las historias de este documento usan la
 > numeración de la planificación temprana del proyecto (HU01–HU11), de
 > cuando existían 11 historias generales. Después se redactaron en detalle
-> como 37 historias independientes en `docs/requisitos/HUs/`, y algunas de
+> como 53 historias independientes en `docs/requisitos/HUs/`, y algunas de
 > las filas de abajo hoy corresponden a varias historias reales a la vez
 > (ver columna "Corresponde hoy a"). Este documento se conserva como
 > referencia histórica de la estimación de horas — para el estado real de

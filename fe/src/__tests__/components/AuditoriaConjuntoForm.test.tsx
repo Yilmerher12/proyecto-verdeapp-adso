@@ -32,6 +32,9 @@ const CONTENIDO = [
   { modulo_categoria: "Tipos de residuos y su preparación" },
   { modulo_categoria: "Separación en la fuente y código de colores" },
   { modulo_categoria: "Economía circular y aprovechamiento" },
+  // ¿Qué? Las dos categorías nuevas de la tarjeta #597: una se califica y la otra solo se lee.
+  { modulo_categoria: "Residuos peligrosos del hogar" },
+  { modulo_categoria: "Aparatos, llantas y baterías" },
 ];
 
 const TEMA_ELEGIDO = "Tipos de residuos y su preparación";
@@ -54,7 +57,7 @@ function renderFormulario(props: Partial<React.ComponentProps<typeof AuditoriaCo
 // ¿Qué? Espera a que el desplegable de temas termine de cargarse del catálogo.
 // ¿Para qué? Si se elige un tema antes de que lleguen las opciones, selectOptions falla.
 async function esperarTemas() {
-  await screen.findByRole("option", { name: "Cómo entregar el material" });
+  await screen.findByRole("option", { name: "Cómo preparar el material" });
 }
 
 function botonEnviar() {
@@ -95,6 +98,14 @@ describe("AuditoriaConjuntoForm", () => {
       expect(screen.getByRole("radio", { name: "Malo" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Separación por colores de bolsa" })).toBeInTheDocument();
       expect(screen.queryByRole("option", { name: "Por qué es importante reciclar" })).not.toBeInTheDocument();
+    });
+
+    it("ofrece 'Peligrosos mezclados con las bolsas' y esconde 'Aparatos, llantas y baterías'", async () => {
+      renderFormulario();
+      await esperarTemas();
+
+      expect(screen.getByRole("option", { name: "Peligrosos mezclados con las bolsas" })).toBeInTheDocument();
+      expect(screen.queryByRole("option", { name: "Aparatos, llantas y baterías" })).not.toBeInTheDocument();
     });
 
     it("deja la lista de temas vacía (sin romperse) si el catálogo no carga", async () => {
@@ -181,14 +192,12 @@ describe("AuditoriaConjuntoForm", () => {
       expect(botonEnviar()).toHaveTextContent("Enviar auditoría");
     });
 
-    // ¿Qué? Hallazgo de esta tarjeta: quitar una foto rompe el formulario.
-    // ¿Para qué? Las miniaturas se dibujan con `previews.map` y leen `evidencias[i].name`;
-    //           al quitar una foto, `evidencias` ya está actualizada pero `previews` se
-    //           recalcula un render después (useEffect), y en ese render `evidencias[i]`
-    //           es undefined (AuditoriaConjuntoForm.tsx:288).
-    // ¿Impacto? Se deja en skip hasta que una tarjeta `fix/` aparte lo corrija; al
-    //           corregirlo, quitar el skip: el test ya describe el comportamiento esperado.
-    it.skip("vuelve a deshabilitarse si se quita la única foto (bug conocido: el formulario se rompe)", async () => {
+    // ¿Qué? Quitar una foto no debe romper el formulario (defecto D-36, issue #685).
+    // ¿Para qué? Antes las miniaturas salían de dos listas (fotos y enlaces) que se
+    //           actualizaban en momentos distintos; al quitar una foto el formulario se caía.
+    //           Ahora foto y enlace van en el mismo par.
+    // ¿Impacto? Sin esta prueba, volver a separar las dos listas rompería el formulario sin aviso.
+    it("vuelve a deshabilitarse si se quita la única foto", async () => {
       const user = userEvent.setup();
       const { container } = renderFormulario();
       await completarFormulario(user, container);
@@ -196,6 +205,42 @@ describe("AuditoriaConjuntoForm", () => {
       await user.click(screen.getByRole("button", { name: "Quitar esta foto" }));
 
       expect(botonEnviar()).toBeDisabled();
+      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    });
+
+    it("al quitar una de dos fotos deja la otra con su miniatura y sigue habilitado", async () => {
+      const user = userEvent.setup();
+      const { container } = renderFormulario();
+      await completarFormulario(user, container);
+      const input = container.ownerDocument.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, crearFoto("segunda.png"));
+      expect(screen.getAllByRole("img")).toHaveLength(2);
+
+      await user.click(screen.getAllByRole("button", { name: "Quitar esta foto" })[0]);
+
+      expect(screen.getAllByRole("img")).toHaveLength(1);
+      expect(screen.getByRole("img")).toHaveAttribute("alt", "segunda.png");
+      expect(botonEnviar()).toBeEnabled();
+    });
+
+    it("libera el enlace de la foto que se quita", async () => {
+      const user = userEvent.setup();
+      const { container } = renderFormulario();
+      await completarFormulario(user, container);
+
+      await user.click(screen.getByRole("button", { name: "Quitar esta foto" }));
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+    });
+
+    it("libera los enlaces de las fotos que quedan al cerrar el formulario", async () => {
+      const user = userEvent.setup();
+      const { container, unmount } = renderFormulario();
+      await completarFormulario(user, container);
+
+      unmount();
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
     });
 
     it("no llama a la API si se intenta enviar incompleto", async () => {
@@ -243,7 +288,7 @@ describe("AuditoriaConjuntoForm", () => {
       await user.click(botonEnviar());
 
       expect(await screen.findByText("¿Enviar esta auditoría?")).toBeInTheDocument();
-      expect(screen.getByText("Vas a calificar Cómo entregar el material como Regular en Torres del Parque.")).toBeInTheDocument();
+      expect(screen.getByText("Vas a calificar Cómo preparar el material como Regular en Torres del Parque.")).toBeInTheDocument();
       expect(screen.getByText("Después de enviarla no podrás editarla.")).toBeInTheDocument();
       expect(mockCrearAuditoria).not.toHaveBeenCalled();
     });

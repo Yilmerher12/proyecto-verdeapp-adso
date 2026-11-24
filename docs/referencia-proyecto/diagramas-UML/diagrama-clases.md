@@ -7,6 +7,8 @@ Este documento describe la estructura de clases del sistema **VerdeApp**, identi
 > **Nota (2026-08-29)**: este diagrama estaba muy desactualizado — le faltaban 7 entidades completas (`AuditoriaConjunto`, `Comunicado`, `Novedad`, `SolicitudDesvinculacion`, `PasswordResetToken`, `EmailVerificationToken`, `TokenRevocado`) y todos los IDs seguían marcados como `int`, cuando el proyecto migró 20 de sus 22 tablas a UUIDv7 (a pedido del profesor, para que las llaves primarias no sean adivinables). Se reconstruyó leyendo directamente `be/app/models/*.py`. También se dejó de listar un getter/setter por cada atributo (ruido que no aporta, y Python no los usa explícitamente) — ahora solo se muestran los métodos de negocio reales.
 >
 > **Nota (2026-09-08)**: 3 correcciones más, encontradas en una auditoría general de documentación. (1) El proyecto migró de UUIDv7 a UUIDv4 (issue #167) después de la nota de arriba — v7 seguía sin ser adivinable, pero codificaba la marca de tiempo de creación dentro del propio ID, algo que v4 no filtra. Todo el diagrama ya refleja `generar_uuid4()`. (2) `RecicladorConjunto` pasó de tabla puente plana a entidad completa con historial (`fecha_autorizacion`, `fecha_revocacion`, `revocado_por_id`) para poder revocar el acceso de un reciclador sin borrar el vínculo (HU-038) — ya se dibuja igual que `AdministradorConjuntoAsignacion`. (3) `PuntoAcopio` ganó un campo `activo` (soft-delete, HU-017).
+>
+> **Nota (2026-11-20)**: se comparó cada clase contra los modelos de `be/app/models/` (30 clases) y se agregó lo que faltaba: `Usuario.version_sesion` (contador que cierra las sesiones abiertas al cambiar la contraseña, issue #308), `ContenidoEducativo.url_imagen` y la relación `Usuario` → `InvitacionRecicladorConjunto`.
 
 ---
 
@@ -37,6 +39,7 @@ class Usuario {
     +string locale
     +int intentos_fallidos
     +datetime bloqueado_hasta
+    +int version_sesion
     +string foto_perfil_url
 
     +registrarUsuario()
@@ -331,6 +334,7 @@ class ContenidoEducativo {
     +date fecha_publicacion
     +string url_video
     +string url_guia
+    +string url_imagen
 }
 
 class ContenidoEducativoEnvio {
@@ -401,6 +405,7 @@ ConjuntoResidencial "0..1" --> "*" NovedadEnviada
 AdministradorConjunto "1" --> "*" Comunicado
 ConjuntoResidencial "1" --> "*" Comunicado
 
+Usuario "1" --> "*" InvitacionRecicladorConjunto : invita
 InvitacionRecicladorConjunto "*" --> "1" Reciclador
 InvitacionRecicladorConjunto "*" --> "1" ConjuntoResidencial
 
@@ -637,6 +642,7 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 | ConjuntoResidencial         | Comunicado                        | 1 : N    |
 | Reciclador                  | InvitacionRecicladorConjunto      | 1 : N    |
 | ConjuntoResidencial         | InvitacionRecicladorConjunto      | 1 : N    |
+| Usuario                     | InvitacionRecicladorConjunto      | 1 : N (invita) |
 | ConjuntoResidencial         | Notificacion                      | 1 : N    |
 | ConjuntoResidencial         | AuditoriaConjunto                 | 1 : N    |
 | Notificacion                | NotificacionDestinatario          | 1 : N    |

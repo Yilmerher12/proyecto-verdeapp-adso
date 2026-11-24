@@ -7,6 +7,8 @@ Este documento describe los casos de uso identificados para la plataforma **Verd
 > **Nota (2026-08-29)**: este documento tenía dos problemas reales. Primero, **RQF012 describía por error el flujo de desvinculación/reasignación** — ese flujo en realidad vive en un requisito aparte, RQF-016 (`docs/requisitos/RFs/RQF-016_desvinculacion_reasignacion_conjuntos.md`), que nunca se había agregado aquí. Segundo, faltaban **RQF-016** y **RQF-017** (cambio de idioma) por completo — el catálogo real de requisitos funcionales llega hasta RQF-017, no hasta RQF-015. Corregido.
 >
 > **Nota (2026-09-08)**: RQF012 le agregó un tercer flujo — el Admin_conjunto ahora puede revocar el acceso de un reciclador que ya autorizó (HU-038), no solo invitarlo. Se documenta abajo como "Flujo C" de ese mismo caso de uso.
+>
+> **Nota (2026-11-20)**: se revisó el catálogo contra `docs/requisitos/RFs/`: están los 21 requisitos (RQF001 a RQF021), uno por archivo. Se actualizaron RQF005 y RQF011, que habían quedado atrás con el inventario de ECA de la UAESP (#664, #665): la lista del Admin_sistema ahora se pagina, se busca y se filtra, y "eliminar" es baja lógica con eliminación definitiva solo después.
 
 ---
 
@@ -298,7 +300,7 @@ Permite consultar contenido educativo relacionado con reciclaje y separación de
 
 ### Descripción
 
-Permite consultar el listado de recicladores (con "Llamar" y "WhatsApp" si el reciclador autorizó compartir su teléfono) y la tabla de puntos de acopio, cuya fila se despliega en una ficha con la ubicación, "Cómo llegar", el contacto y la foto.
+Permite consultar el listado de recicladores (con "Llamar" y "WhatsApp" si el reciclador autorizó compartir su teléfono) y la tabla de puntos de acopio (solo los activos, con la UAESP citada como fuente del inventario, issue #665), cuya fila se despliega en una ficha con la ubicación, "Cómo llegar", el contacto y la foto.
 
 ---
 
@@ -384,14 +386,15 @@ Permite administrar el contenido educativo de la plataforma.
 
 ### Descripción
 
-Permite administrar el directorio de recicladores y puntos de acopio registrados.
+Permite administrar los puntos de acopio del directorio. Desde el issue #664 el directorio parte del inventario de ECA de la UAESP (799 puntos), así que la lista se pagina, se busca y se filtra en el servidor.
 
 ### Funciones
 
-* Crear registros.
-* Editar registros.
-* Eliminar registros.
-* Consultar registros.
+* Crear y editar puntos de acopio, con foto opcional y un "motivo del cambio" que queda como comentario del punto.
+* Dar de baja un punto (baja lógica: deja de verse en el directorio público) y reactivarlo.
+* Eliminar definitivamente un punto que ya está de baja.
+* Buscar por nombre, dirección u organización, y filtrar por localidad y por estado (Todos, Activos o De baja).
+* Ver la ficha del punto y comentar.
 
 ---
 

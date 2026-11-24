@@ -257,11 +257,7 @@ docker compose up -d verde_db
 docker ps
 ```
 
-**3. Recrear la base de datos de pruebas** (`pytest` usa una base aparte, `verdeapp_test_db`, que también se borró con el volumen):
-
-```bash
-docker exec verde_db psql -U verde_user -d verdeapp_db -c "CREATE DATABASE verdeapp_test_db OWNER verde_user;"
-```
+**3. La base de datos de pruebas no necesita nada.** `pytest` usa su propio contenedor (`verde_db_test`, puerto 5434), que no usa el volumen que acabas de borrar. Si no está encendido, mira la sección "Pruebas y cobertura" más abajo.
 
 **4. Borrar las fotos y adjuntos viejos** (en el Método B se guardan en `be/app/uploads/`, no en un volumen de Docker). Desde la raíz del proyecto, en PowerShell:
 
@@ -456,7 +452,6 @@ A continuación se detalla la organización exacta del monorepositorio alojado e
 verde-app/
 ├── .github/                 # Configuraciones del repositorio y flujos de trabajo
 ├── .vscode/                 # Configuraciones de interfaz y entorno para VS Code
-├── assets/                  # Diagramas SVG y recursos gráficos de la arquitectura
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
 │   ├── app/                 # Código fuente principal de la API
@@ -566,10 +561,13 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/requisitos/RFs/`](docs/requisitos/RFs/) | Requisitos Funcionales (RQF) — qué debe hacer el sistema, con reglas de negocio y endpoints asociados |
 | [`docs/requisitos/RNFs/`](docs/requisitos/RNFs/) | Requisitos No Funcionales — seguridad, disponibilidad, rendimiento, usabilidad, accesibilidad, mantenibilidad |
 | [`docs/requisitos/restricciones.md`](docs/requisitos/restricciones.md) | Reglas transversales del proyecto (idioma del código, convención de ramas/commits, versionado de dependencias) |
+| [`docs/arquitectura.md`](docs/arquitectura.md) | Diagramas de la arquitectura: el sistema completo, las capas del backend, la estructura del frontend, una petición autenticada y el flujo de ramas con el CI |
 | [`docs/conceptos/`](docs/conceptos/) | Explicación pedagógica de OWASP Top 10, accesibilidad (ARIA/WCAG) y patrones de arquitectura, con evidencia real de archivo y línea |
-| [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Diagrama de clases y catálogo de casos de uso |
+| [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Modelo entidad-relación, modelo relacional (MR), diagrama de clases y catálogo de casos de uso |
 | [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance. En [`informes-scrum/`](docs/gestion-proyecto/informes-scrum/) están los informes semanales del Scrum Master |
 | [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md) | Bootcamp de testing: capa de cada integrante por semana y cobertura registrada |
+| [`docs/despliegue.md`](docs/despliegue.md) | Cómo arranca el backend, variables de entorno de cada parte, errores de arranque y cómo se desplegaría el proyecto |
+| [`docs/api.md`](docs/api.md) | Lista completa de los 104 endpoints del backend: qué hace cada uno y quién puede usarlo |
 
 Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
 
@@ -594,6 +592,32 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 | API e integración (BD real `verdeapp_test_db`) | `be/app/tests/` | `uv run pytest` desde `be/` |
 | Componentes React | `fe/src/__tests__/` | `pnpm test` desde `fe/` |
 | E2E (navegador real) | `e2e/tests/` | `pnpm test` desde `e2e/` |
+
+**BD de pruebas del backend** (contenedor `verde_db_test`, puerto 5434, sin volumen: no guarda nada al apagarse). Requiere `TEST_DATABASE_URL` en `be/.env` (el valor está en `be/.env.example`). Tres comandos, desde la raíz del proyecto:
+
+```bash
+docker compose up -d --wait verde_db_test
+```
+
+```bash
+cd be
+```
+
+```bash
+uv run pytest -q
+```
+
+Para apagarla y borrar todo rastro (desde la raíz):
+
+```bash
+docker compose down -v verde_db_test
+```
+
+Si `pytest` se detiene con "Falta TEST_DATABASE_URL", agrega esa variable a `be/.env`. Si falla con "connection refused" en el puerto 5434, enciende la BD con el primer comando.
+
+**Documentación de las pruebas** (`docs/pruebas/`): el [plan de pruebas](docs/pruebas/plan-de-pruebas.md) (alcance, niveles, ambiente y criterios), el [informe de pruebas automatizadas](docs/pruebas/informe-pruebas-automatizadas.md) (resultados y casos de una ejecución real) y el [reporte de ejecución y defectos](docs/pruebas/reporte-ejecucion-y-defectos.md) (defectos con su severidad y su estado).
+
+**Última ejecución documentada (20 de noviembre de 2026):** 2138 pruebas automatizadas (1012 del backend, 1124 del frontend y 2 E2E), 2137 pasaron y 1 quedó omitida a propósito por un defecto conocido (issue #685, corregido después en el PR #693: el frontend quedó en 1127 de 1127 pruebas en verde). La cobertura fue de 97.3 % de líneas en el backend y 89.4 % en el frontend. El detalle está en el [informe de pruebas automatizadas](docs/pruebas/informe-pruebas-automatizadas.md).
 
 **Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
 

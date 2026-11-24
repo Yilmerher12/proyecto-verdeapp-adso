@@ -51,6 +51,17 @@ class Settings(BaseSettings):
             return v.replace("postgresql://", "postgresql+psycopg2://", 1)
         return v
 
+    # ¿Qué? URL de la base de datos que usa pytest (be/app/tests/conftest.py),
+    #       no la app. Opcional: solo la exigen las pruebas.
+    # ¿Para qué? Que la conexión de las pruebas salga de be/.env o del entorno
+    #           (CI) y no esté escrita dentro de un archivo de test. Declararla
+    #           aquí también evita que Pydantic rechace el .env por "variable
+    #           no permitida".
+    # ¿Impacto? Vacía = la app arranca igual; pytest se detiene con un mensaje
+    #           que explica cómo definirla. Debe incluir el driver
+    #           (postgresql+psycopg2://), como en be/.env.example.
+    TEST_DATABASE_URL: str = ""
+
     # ────────────────────────────
     # 🔐 JWT y Seguridad
     # ────────────────────────────
