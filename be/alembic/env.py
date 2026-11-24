@@ -26,8 +26,14 @@ from app.config import settings
 # ¿Qué? Objeto de configuración de Alembic que lee alembic.ini.
 config = context.config
 
-# ¿Qué? Sobreescribimos la URL de la BD con el valor de nuestro archivo .env.
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# ¿Qué? Sobreescribimos la URL de la BD con el valor de nuestro archivo .env,
+#       salvo que quien llama ya haya puesto una (alembic.ini la deja vacía).
+# ¿Para qué? Que las pruebas (be/app/tests/conftest.py) corran las migraciones
+#           sobre la BD de pruebas pasando su propia URL.
+# ¿Impacto? Con "alembic upgrade head" desde la terminal nada cambia: la URL
+#           llega vacía y se usa DATABASE_URL, como siempre.
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # ¿Qué? Configura el sistema de logging de Python según alembic.ini.
 if config.config_file_name is not None:
