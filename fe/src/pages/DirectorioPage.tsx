@@ -276,7 +276,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 onChange={(e) => setBusquedaEscrita(e.target.value)}
                 aria-label={t("directorio.searchPoints")}
                 placeholder={t("directorio.searchPoints")}
-                className="focus-ring w-full rounded-lg border border-edge bg-white py-2 pl-9 pr-3 text-sm text-gray-900 dark:border-night-edge dark:bg-night-panel dark:text-white"
+                className="focus-ring w-full rounded-lg border border-edge bg-white py-2 pl-9 pr-3 text-sm text-gray-900 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -289,7 +289,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                   setPuntoAbiertoId(null);
                   reiniciar();
                 }}
-                className="focus-ring min-w-0 max-w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring min-w-0 max-w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 dark:border-night-edge dark:bg-night-field dark:text-gray-200"
               >
                 <option value="">{t("directorio.allLocalities")}</option>
                 {localidades.map((l) => (

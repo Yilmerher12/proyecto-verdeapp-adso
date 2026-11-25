@@ -42,7 +42,7 @@ const FILAS_POR_PAGINA = 10;
 const CONTEOS_VACIOS: ConteosNivelAdmin = { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 };
 
 const CLASE_CONTROL_FILTRO =
-  "touch-target-h rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200";
+  "touch-target-h rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-200";
 const CLASE_FLECHA =
   "touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover";
 

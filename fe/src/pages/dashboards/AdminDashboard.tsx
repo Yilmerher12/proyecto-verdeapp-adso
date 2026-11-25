@@ -642,7 +642,7 @@ export function AdminDashboard() {
                   setSearchInput(e.target.value);
                 }}
                 placeholder={t("dashboards.admin.usersSection.searchPlaceholder")}
-                className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 lg:w-48"
+                className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-field dark:text-gray-200 lg:w-48"
               />
             </div>
           </div>
@@ -657,7 +657,7 @@ export function AdminDashboard() {
                 value={localidadId}
                 onChange={(e) => cambiarLocalidad(e.target.value ? Number(e.target.value) : "")}
                 aria-label={t("dashboards.admin.localidadFilter.label")}
-                className="focus-ring touch-target-h w-full min-w-0 cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring touch-target-h w-full min-w-0 cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 dark:border-night-edge dark:bg-night-field dark:text-gray-200"
               >
                 <option value="">{t("dashboards.admin.localidadFilter.all")}</option>
                 {localidades.map((l) => (

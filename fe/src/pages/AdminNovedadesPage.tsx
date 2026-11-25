@@ -404,7 +404,7 @@ export function AdminNovedadesPage() {
                 placeholder={t("novedades.admin.filters.searchPlaceholder")}
                 aria-label={t("novedades.admin.filters.searchPlaceholder")}
                 maxLength={100}
-                className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-2 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-2 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-field dark:text-gray-200"
               />
             </div>
 
@@ -425,7 +425,7 @@ export function AdminNovedadesPage() {
                 return (
                   <div
                     key={item.id_novedad}
-                    className={`rounded-2xl border bg-white p-4 dark:bg-night-panel ${
+                    className={`rounded-2xl border bg-white p-4 dark:bg-night-card ${
                       item.archivada ? "border-gray-100 opacity-60 dark:border-night-line" : "border-gray-100 dark:border-night-line"
                     }`}
                   >

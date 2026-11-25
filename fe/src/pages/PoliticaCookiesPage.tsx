@@ -89,7 +89,7 @@ export function PoliticaCookiesPage() {
         <p>{t("legal.cookies.s2.p1")}</p>
 
         <div className="mt-4 space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-night-line dark:bg-night-panel p-4">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-night-line dark:bg-night-card p-4">
             <h3 className="mb-1 text-sm font-semibold text-accent-700 dark:text-accent-400">
               {t("legal.cookies.s2.authCategory.title")}
             </h3>
@@ -104,7 +104,7 @@ export function PoliticaCookiesPage() {
             </p>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-night-line dark:bg-night-panel p-4">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-night-line dark:bg-night-card p-4">
             <p>
               <Trans i18nKey="legal.cookies.s2.localStorageNote" components={{ strong: S, code: C }} />
             </p>

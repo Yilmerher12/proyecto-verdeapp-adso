@@ -463,7 +463,7 @@ export function RegisterPage() {
                 onClick={() => setSearchParams({})}
                 aria-label={t("auth.register.changeRole")}
                 title={t("auth.register.changeRole")}
-                className="focus-ring absolute left-0 top-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-accent-700 transition-colors hover:bg-accent-50 dark:border-night-line dark:text-accent-400 dark:hover:bg-accent-300/15"
+                className="focus-ring absolute left-0 top-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-edge text-accent-700 transition-colors hover:bg-accent-50 dark:border-night-edge dark:text-accent-400 dark:hover:bg-accent-300/15"
               >
                 <ArrowLeft className="icon-md" aria-hidden="true" />
               </button>
@@ -495,7 +495,7 @@ export function RegisterPage() {
                   key={rol}
                   type="button"
                   onClick={() => setSearchParams({ rol })}
-                  className="focus-ring flex cursor-pointer flex-col items-center justify-start rounded-2xl border-2 border-gray-200 p-4 text-center transition-all hover:border-accent-400 dark:border-night-line"
+                  className="focus-ring flex cursor-pointer flex-col items-center justify-start rounded-2xl border-2 border-edge p-4 text-center transition-all hover:border-accent-400 dark:border-night-edge"
                 >
                   <Icon className="icon-xl mb-2 text-accent-600 dark:text-accent-400" aria-hidden="true" />
                   <span className="text-base font-semibold leading-tight text-gray-900 dark:text-white">{t(etiqueta)}</span>

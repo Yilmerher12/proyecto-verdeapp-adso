@@ -52,7 +52,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice, ce
 
           {notice && <div className="mb-4">{notice}</div>}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-panel sm:p-8">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card sm:p-8">
             <div className={`mb-6 ${centered ? "text-center" : ""}`}>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
               {subtitle && (

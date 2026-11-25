@@ -527,14 +527,14 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setBuscarMod(e.target.value)}
                   placeholder={t(`${p}.modules.searchPlaceholder`)}
                   aria-label={t(`${p}.modules.searchPlaceholder`)}
-                  className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-field dark:text-gray-200 sm:w-56"
                 />
               </div>
               <select
                 value={categoriaFiltro}
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
                 aria-label={t(`${p}.modules.categoryFilterLabel`)}
-                className="focus-ring cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 dark:border-night-edge dark:bg-night-field dark:text-gray-200"
               >
                 <option value="">{t(`${p}.modules.allCategories`)}</option>
                 {categorias.map((c) => (
@@ -848,7 +848,7 @@ export function AdminContenidoEducativoPage() {
 
             {/* ¿Qué? Vista previa fija mientras se recorre el formulario (sticky) — el mismo MuroLeccion que ve el Residente. */}
             <aside
-              className={`border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-panel sm:p-8 md:sticky md:top-0 md:self-start md:border-l md:border-t-0 ${
+              className={`border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card sm:p-8 md:sticky md:top-0 md:self-start md:border-l md:border-t-0 ${
                 vistaMovil === "editar" ? "hidden md:block" : ""
               }`}
             >
