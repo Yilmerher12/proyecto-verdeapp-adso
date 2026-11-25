@@ -114,7 +114,7 @@
   --color-night-soft: var(--night-soft);       /* relleno suave sobre la tarjeta: etiquetas, notas */
   --color-night-line: var(--night-line);       /* bordes decorativos */
   --color-night-hover: var(--night-hover);     /* fondo al pasar el mouse */
-  --color-night-sidebar: var(--night-sidebar); /* menú lateral: verde de marca */
+  --color-night-sidebar: var(--night-sidebar); /* menú lateral: del color de las tarjetas, igual que el encabezado */
   --color-night-track: var(--night-track);     /* pista de la barra de progreso */
 
   /* ── Borde de los controles (issue #503) ───────────────────────────────── */
@@ -158,7 +158,7 @@
   --night-line: #384742;
   --night-hover: #2b3631;
   --night-edge: #698c7f;
-  --night-sidebar: #143428;
+  --night-sidebar: var(--night-card);
   --night-track: #121715;
   --color-green-50: #eaf7f1;
   --color-green-100: #c9ebda;

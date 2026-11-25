@@ -122,12 +122,15 @@ Idea que se tomó de ahí: **decidir por rol y no por tono**. Y una conclusión 
 
 ## Decisiones
 
-### 1. Zonas de la pantalla: menú de marca
+### 1. Zonas de la pantalla: menú y encabezado
 
-- El menú lateral es **verde de marca en los dos temas** (hoy en oscuro es casi negro).
-- El **encabezado** (barra superior con campana, idioma y tema) es del **color de las tarjetas**.
-- Alternativas descartadas: marco único (menú y encabezado del mismo color neutro) y todo plano (todo del mismo color, separado por líneas).
-- Por qué: conserva la identidad verde y quita la incoherencia entre claro y oscuro.
+- **Claro:** el menú lateral conserva el **verde de marca** (`accent-900`), como hoy.
+- **Oscuro:** el menú lateral es del **color de las tarjetas** (`#242e2a`), igual que el encabezado (barra superior con campana, idioma y tema). Los dos forman un marco un paso más claro que el contenido; el verde queda en el logo, el ítem activo y los íconos. Hoy era casi negro.
+- Alternativas descartadas:
+  - Menú verde de marca en los dos temas (la primera versión de esta decisión): se probó en la app y casi no cambiaba al cambiar de tema.
+  - Verde casi negro en oscuro (volvía al aspecto original de la sesión) y verde medio.
+  - Menú claro o blanco en el tema claro (cambiaba demasiado la identidad del tema claro).
+- Por qué: el menú y el encabezado hablan el mismo idioma en oscuro (una sola regla: marco, contenido y tarjeta), cambia claramente con el tema y no obliga a tocar el tema claro.
 
 ### 2. Campos: mismo color que su contenedor, con borde estándar
 
@@ -225,10 +228,10 @@ Se compararon cuatro niveles de claridad contra el actual. Se eligió el **nivel
 | Capa flotante | `#2f3c37` | sobre tarjeta 1.22:1 |
 | Borde decorativo | `#384742` | sobre tarjeta 1.43:1 |
 | Borde de campos y botones secundarios | `#698c7f` | 3.8:1 sobre tarjeta, 3.1:1 sobre capa flotante |
-| Menú lateral | `#143428` | sobre fondo 1.27:1 |
+| Menú lateral | `#242e2a` (el color de la tarjeta) | sobre fondo 1.22:1 |
 | Texto | `#eaf0ed` | |
 | Texto secundario | `#97aaa3` | 5.7:1 sobre tarjeta |
-| Texto del menú | `#bfe3d0` | 9.7:1 sobre el menú |
+| Texto del menú | texto claro con opacidad (`accent-50` al 80 %) | por medir en la app al cerrar la parte del menú |
 | Botón principal | menta `#86d6a6`, texto `#0a2018` | 8.1:1 sobre tarjeta |
 | Barra de progreso | pista `#121715`, relleno menta `#86d6a6` | 10.5:1 entre relleno y pista |
 | Turquesa: ícono | `#67e8f9` | 9.7:1 sobre tarjeta |
