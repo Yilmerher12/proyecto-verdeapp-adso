@@ -283,7 +283,7 @@ export function ProfilePage() {
     <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       {/* Success banner */}
       {exito && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
+        <div className="flex items-center gap-2 rounded-xl aviso-exito px-4 py-3 text-sm font-medium">
           <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {t("profile.updateSuccess")}
         </div>

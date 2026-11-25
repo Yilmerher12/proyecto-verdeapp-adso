@@ -408,8 +408,8 @@ export function AdminDashboard() {
       <span
         className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
           habilitado
-            ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
-            : "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300"
+            ? "aviso-exito"
+            : "aviso-error"
         }`}
       >
         {habilitado
@@ -624,7 +624,7 @@ export function AdminDashboard() {
                   {icon}
                   {label}
                   {soloInactivos && inactivos && inactivos[id] > 0 && (
-                    <span className="rounded-full bg-amber-100 px-1.5 text-[0.6875rem] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">{inactivos[id]}</span>
+                    <span className="rounded-full aviso-aviso px-1.5 text-[0.6875rem] font-bold">{inactivos[id]}</span>
                   )}
                 </button>
               ))}
@@ -685,7 +685,7 @@ export function AdminDashboard() {
               aria-pressed={soloInactivos}
               className={`touch-target-h flex cursor-pointer items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                 soloInactivos
-                  ? "border-red-300 bg-red-50 text-red-700 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300"
+                  ? "aviso-error"
                   : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-hover"
               }`}
             >

@@ -45,15 +45,15 @@ const MOTIVO_OTROS = "otros";
 
 // ¿Qué? Issue #512: color de la etiqueta de estado en "Historial de novedades".
 const CLASE_ESTADO: Record<NovedadEnviada["estado"], string> = {
-  NUEVA: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  NUEVA: "aviso-aviso",
   EN_REVISION: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300",
-  RESUELTA: "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300",
+  RESUELTA: "aviso-exito",
 };
 
 // ¿Qué? Issue #520: color de la etiqueta de prioridad (la misma que ve el Admin Sistema en su bandeja).
 const CLASE_PRIORIDAD: Record<NovedadEnviada["prioridad"], string> = {
-  ALTA: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300",
-  MEDIA: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200",
+  ALTA: "aviso-error",
+  MEDIA: "aviso-aviso",
   BAJA: "bg-gray-100 text-gray-600 dark:bg-night-soft dark:text-gray-300",
 };
 

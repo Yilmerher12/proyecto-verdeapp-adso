@@ -282,7 +282,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
               <span
                 className={`rounded-full px-2.5 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wide ${
                   enCurso
-                    ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                    ? "aviso-exito"
                     : "bg-gray-100 text-gray-500 dark:bg-night-inset dark:text-gray-400"
                 }`}
               >

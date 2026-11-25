@@ -684,6 +684,31 @@
 }
 
 /* ============================================================================
+   Avisos y etiquetas de estado: tonal reforzado (decisión 6 de la investigación de paleta)
+   ¿Qué? `aviso-exito`, `aviso-aviso`, `aviso-error` y `aviso-info` dan relleno, borde y color de texto
+         a un aviso o a una etiqueta de estado. Claro: relleno -100, borde medio, texto -900.
+         Oscuro: relleno al 18 % del color pleno, borde al 60 % y texto -200.
+   ¿Para qué? Antes cada caja de aviso y cada etiqueta escribía a mano sus colores (amber-50, red-100,
+              dark:bg-amber-400/10…) y casi no se despegaban de la tarjeta en oscuro. El componente
+              Alert y esas cajas comparten ahora un solo estilo.
+   ¿Impacto? Se usan junto con el tamaño y la forma de cada caso (`rounded-lg p-3 text-xs`,
+             `rounded-full px-2 py-0.5`). No llevan íconos ni role="alert": una nota dentro de una
+             tarjeta no debe anunciarse como alerta; para eso está el componente Alert.
+   ============================================================================ */
+@utility aviso-exito {
+  @apply border border-accent-400 bg-accent-100 text-accent-900 dark:border-accent-300/60 dark:bg-accent-300/[0.18] dark:text-accent-200;
+}
+@utility aviso-aviso {
+  @apply border border-yellow-500 bg-yellow-100 text-yellow-900 dark:border-amber-400/60 dark:bg-amber-400/[0.18] dark:text-amber-100;
+}
+@utility aviso-error {
+  @apply border border-red-500 bg-red-100 text-red-900 dark:border-red-400/60 dark:bg-red-400/[0.18] dark:text-red-200;
+}
+@utility aviso-info {
+  @apply border border-cyan-700 bg-cyan-100 text-cyan-900 dark:border-cyan-400/60 dark:bg-cyan-400/[0.18] dark:text-cyan-200;
+}
+
+/* ============================================================================
    Barra de progreso indeterminada (components/ui/ProgressBar.tsx)
    ¿Qué? Un tramo que va y viene, para cuando aún no se sabe el porcentaje.
    ¿Para qué? Es el estado de la barra entre que se toca "enviar" y que el

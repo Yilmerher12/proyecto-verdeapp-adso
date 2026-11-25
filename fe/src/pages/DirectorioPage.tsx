@@ -408,7 +408,7 @@ function FranjaEca({ soloAcopio }: { soloAcopio: boolean }) {
         titulo={t("directorio.infoPuntos.titulo")}
         descripcion={t(soloAcopio ? "directorio.infoPuntos.descripcionReciclador" : "directorio.infoPuntos.descripcionResidente")}
       />
-      <p className="flex items-start gap-2 border-t border-amber-200 bg-amber-50 px-5 py-2 text-xs text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
+      <p className="flex items-start gap-2 border-x-0 border-b-0 aviso-aviso px-5 py-2 text-xs">
         <TriangleAlert className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
         <span>{t("directorio.infoPuntos.nota")}</span>
       </p>

@@ -102,7 +102,7 @@ export function TablaPuntosAcopio<T extends PuntoFicha>({
                           className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                             p.activo === false
                               ? "bg-gray-100 text-gray-600 dark:bg-night-hover dark:text-gray-300"
-                              : "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                              : "aviso-exito"
                           }`}
                         >
                           {p.activo === false ? t("adminPuntosAcopio.inactiveBadge") : t("adminPuntosAcopio.panel.active")}

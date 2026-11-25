@@ -20,8 +20,8 @@ function Contador({ cantidad, tono }: { cantidad: number; tono: "ambar" | "verde
   if (cantidad <= 0) return null;
   const clases =
     tono === "ambar"
-      ? "bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200"
-      : "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400";
+      ? "aviso-aviso"
+      : "aviso-exito";
   // ¿Qué? El espacio de adelante es para el nombre accesible ("Avisos 5", no "Avisos5"); dentro de la fila de
   //       pestañas (flex) no se ve, solo lo separa el `gap`.
   return (
@@ -103,7 +103,7 @@ export function TarjetaConjunto({
         {tienePastillas && (
           <div className="col-span-2 col-start-2 row-start-2 flex flex-wrap items-center gap-2 @xl:col-span-1 @xl:col-start-3 @xl:row-start-1">
             {tieneTotal && (
-              <span className="shrink-0 rounded-full bg-accent-100 px-2.5 py-0.5 text-[0.6875rem] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+              <span className="shrink-0 rounded-full aviso-exito px-2.5 py-0.5 text-[0.6875rem] font-bold">
                 {t("dashboards.adminConjunto.coverage.badge", { pct: porcentaje })}
               </span>
             )}
@@ -112,7 +112,7 @@ export function TarjetaConjunto({
               <span
                 role="img"
                 aria-label={t("dashboards.adminConjunto.avisosSection.unreadBadge", { count: avisosSinLeer })}
-                className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[0.6875rem] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200"
+                className="flex shrink-0 items-center gap-1 rounded-full aviso-aviso px-2.5 py-0.5 text-[0.6875rem] font-bold"
               >
                 <Bell className="icon-sm" aria-hidden="true" />
                 <span aria-hidden="true">{avisosSinLeer}</span>

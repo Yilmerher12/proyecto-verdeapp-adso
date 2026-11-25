@@ -442,7 +442,7 @@ export function AdminNovedadesPage() {
                             {etiquetaDestino(item)}
                           </span>
                           {dias !== null && (
-                            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
+                            <span className="rounded-full aviso-aviso px-2.5 py-0.5 text-xs font-semibold">
                               {t("novedades.admin.expiraPronto", { count: dias })}
                             </span>
                           )}
@@ -653,7 +653,7 @@ export function AdminNovedadesPage() {
                     )}
                   </div>
                 ) : (
-                  <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-snug text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
+                  <div role="status" className="flex gap-2 rounded-xl aviso-aviso px-3 py-2 text-xs font-semibold leading-snug">
                     <TriangleAlert className="icon-sm mt-px shrink-0 icon-appear icon-shake" />
                     {t("novedades.admin.conjunto.massWarning")}
                   </div>

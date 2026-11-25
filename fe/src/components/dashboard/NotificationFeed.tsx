@@ -190,7 +190,7 @@ export function FilaNotificacion({
           {n.leida ? (
             <span>{t("notificationFeed.read")}</span>
           ) : (
-            <span className="rounded-md bg-accent-100 px-2 py-0.5 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+            <span className="rounded-md aviso-exito px-2 py-0.5 font-semibold">
               {t("notificationFeed.new")}
             </span>
           )}

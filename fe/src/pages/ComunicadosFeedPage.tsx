@@ -16,9 +16,9 @@ import { TextoRecortable } from "@/components/ui/TextoRecortable";
 //       Urgente en rojo para que salte a la vista de inmediato (CA-028.2).
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
   INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300",
-  URGENTE: "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300",
+  URGENTE: "aviso-error",
   CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300",
-  MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  MANTENIMIENTO: "aviso-aviso",
   RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
 };
 
@@ -31,9 +31,9 @@ function TarjetaComunicado({ item, fijado }: { item: Comunicado; fijado: boolean
     <article
       className={`rounded-2xl border p-6 ${
         fijado
-          ? "border-red-200 bg-red-50 dark:border-red-400/30 dark:bg-red-400/10"
+          ? "aviso-error"
           : item.tipo === "URGENTE"
-            ? "border-red-200 bg-white dark:border-red-400/30 dark:bg-night-card"
+            ? "border-red-500 bg-white dark:border-red-400/60 dark:bg-night-card"
             : "border-gray-100 bg-white dark:border-night-line dark:bg-night-card"
       }`}
     >

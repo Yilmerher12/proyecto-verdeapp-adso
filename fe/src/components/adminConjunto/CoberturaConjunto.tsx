@@ -69,7 +69,7 @@ export function CoberturaConjunto({ conjunto }: { conjunto: ConjuntoAdministrado
       {tieneTotal ? (
         <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.explain")}</p>
       ) : (
-        <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
+        <p className="rounded-lg aviso-aviso p-3 text-xs">
           {t("dashboards.adminConjunto.coverage.noTotal")}
         </p>
       )}

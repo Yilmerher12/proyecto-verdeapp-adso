@@ -557,7 +557,7 @@ export function AdminConjuntoAgendaPage() {
       {recienArchivado && (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-300"
+          className="flex flex-wrap items-center gap-3 rounded-xl aviso-exito px-4 py-3 text-sm"
         >
           <span className="flex-1">{t("agenda.archivedToast")}</span>
           <Button variant="secondary" size="sm" type="button" onClick={deshacerArchivado} disabled={cambiandoId !== null}>

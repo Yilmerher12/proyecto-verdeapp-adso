@@ -112,7 +112,7 @@ function motivoBloqueo(
 // ¿Para qué? Antes eran 4 colores y dos eran casi el mismo verde: el color no distinguía nada.
 // ¿Impacto? El ícono y el texto siempre acompañan al color: el significado no depende solo de él.
 const VERDE = "bg-accent-700 hover:bg-accent-600 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200";
-const VERDE_APAGADO = "border-accent-200 bg-accent-50 text-accent-800 dark:border-accent-300/30 dark:bg-accent-300/10 dark:text-accent-300";
+const VERDE_APAGADO = "aviso-exito";
 
 const ACCIONES_META = [
   { tipo: "LLEGADA_RECICLADOR", key: "llegada", icon: Truck, color: VERDE, apagado: VERDE_APAGADO },
@@ -121,7 +121,7 @@ const ACCIONES_META = [
     key: "shutLleno",
     icon: TriangleAlert,
     color: "bg-amber-700 hover:bg-amber-600 text-white dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200",
-    apagado: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200",
+    apagado: "aviso-aviso",
   },
   { tipo: "SHUT_LIBRE", key: "shutLibre", icon: PackageCheck, color: VERDE, apagado: VERDE_APAGADO },
   {
@@ -421,7 +421,7 @@ export function RecicladorDashboard() {
           <div className="mb-4 flex items-center gap-2">
             <Mail className="icon-md text-amber-600" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
+            <span className="rounded-full aviso-aviso px-2 py-0.5 text-xs font-bold">
               {invitaciones.length}
             </span>
           </div>
@@ -429,7 +429,7 @@ export function RecicladorDashboard() {
             {invitaciones.map((inv) => (
               <div
                 key={inv.id}
-                className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-300/30 dark:bg-amber-400/10 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl aviso-aviso p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-white text-sm">{inv.nombre_conjunto}</p>
@@ -536,7 +536,7 @@ export function RecicladorDashboard() {
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
                             estadoActivo.shut_lleno
-                              ? "bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200"
+                              ? "aviso-aviso"
                               : "bg-gray-200 text-gray-700 dark:bg-night-hover dark:text-gray-300"
                           }`}
                         >
@@ -552,7 +552,7 @@ export function RecicladorDashboard() {
           </section>
 
           {feedbackAuditoria && (
-            <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
+            <div className="flex items-center gap-2 rounded-xl aviso-exito px-4 py-3 text-sm font-medium">
               <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
               {feedbackAuditoria}
             </div>
@@ -634,7 +634,7 @@ export function RecicladorDashboard() {
             {sinConjuntos && (
               <p
                 id="reciclador-sin-conjuntos"
-                className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200"
+                className="mb-3 flex items-start gap-2 rounded-lg aviso-aviso px-3 py-2 text-xs font-medium"
               >
                 <Info className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
                 {t("dashboards.reciclador.sendSection.noConjuntos")}
@@ -678,7 +678,7 @@ export function RecicladorDashboard() {
               })}
             </div>
             {feedbackOk && (
-              <div className="mt-3 flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
+              <div className="mt-3 flex items-center gap-2 rounded-xl aviso-exito px-4 py-3 text-sm font-medium">
                 <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
                 {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
               </div>
@@ -761,7 +761,7 @@ export function RecicladorDashboard() {
               onClose={() => setModalTipo(null)}
             >
               {motivoModal && (
-                <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
+                <p className="rounded-lg aviso-aviso px-3 py-2 text-xs font-medium">
                   {motivoModal}
                 </p>
               )}

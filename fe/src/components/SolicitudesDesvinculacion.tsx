@@ -75,7 +75,7 @@ export function SolicitudesDesvinculacion() {
         solicitudes.map((s) => (
           <div
             key={s.id}
-            className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-300/30 dark:bg-amber-400/10"
+            className="rounded-xl aviso-aviso p-4"
           >
             <p className="text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(s.created_at)}</p>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">{s.nombre_conjunto}</p>

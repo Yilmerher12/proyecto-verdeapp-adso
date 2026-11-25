@@ -557,8 +557,9 @@ describe("AdminConjuntoDashboard", () => {
       renderPage();
 
       const contador = await screen.findByRole("img", { name: "5 avisos nuevos" });
-      expect(contador).toHaveClass("bg-amber-100");
-      expect(contador).not.toHaveClass("bg-red-100");
+      // ¿Qué? Las clases de color salen ahora de las utilidades compartidas `aviso-*` (index.css).
+      expect(contador).toHaveClass("aviso-aviso");
+      expect(contador).not.toHaveClass("aviso-error");
     });
 
     it("la pestaña Avisos muestra el mismo contador, y no hay contador si no hay avisos sin leer", async () => {

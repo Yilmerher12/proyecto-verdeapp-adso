@@ -80,9 +80,9 @@ function resumirTexto(texto: string): string {
 //       que en el feed que ven residentes/recicladores.
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
   INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300",
-  URGENTE: "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300",
+  URGENTE: "aviso-error",
   CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300",
-  MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  MANTENIMIENTO: "aviso-aviso",
   RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
 };
 

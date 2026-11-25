@@ -22,9 +22,9 @@ import { Button } from "@/components/ui/Button";
 function BadgeEstado({ estado }: { estado: string }) {
   const { t } = useTranslation();
   const estilos: Record<string, string> = {
-    PENDIENTE: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
-    ACEPTADA: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
-    RECHAZADA: "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300",
+    PENDIENTE: "aviso-aviso",
+    ACEPTADA: "aviso-exito",
+    RECHAZADA: "aviso-error",
   };
   const etiquetas: Record<string, string> = {
     PENDIENTE: t("dashboards.adminConjunto.estado.pendiente"),

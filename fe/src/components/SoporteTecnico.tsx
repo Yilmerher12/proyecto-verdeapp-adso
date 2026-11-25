@@ -40,8 +40,8 @@ const PRIORIDADES: PrioridadSoporte[] = ["ALTA", "MEDIA", "BAJA"];
 const TAMANO_PAGINA = 10;
 
 const CLASE_PRIORIDAD: Record<PrioridadSoporte, string> = {
-  ALTA: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300",
-  MEDIA: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200",
+  ALTA: "aviso-error",
+  MEDIA: "aviso-aviso",
   BAJA: "bg-gray-100 text-gray-600 dark:bg-night-soft dark:text-gray-300",
 };
 
@@ -54,9 +54,9 @@ const BARRA_PRIORIDAD: Record<PrioridadSoporte, string> = {
 };
 
 const CLASE_ESTADO: Record<EstadoSoporte, string> = {
-  NUEVA: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  NUEVA: "aviso-aviso",
   EN_REVISION: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300",
-  RESUELTA: "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300",
+  RESUELTA: "aviso-exito",
 };
 
 type Conteos = Record<FiltroEstado, number>;
@@ -215,7 +215,7 @@ export function SoporteTecnico() {
               <>
                 {t(labelKey)}
                 {conteos && conteos[id] > 0 && (
-                  <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[0.6875rem] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
+                  <span className="ml-1.5 rounded-full aviso-aviso px-1.5 py-0.5 text-[0.6875rem] font-bold">
                     {conteos[id]}
                   </span>
                 )}

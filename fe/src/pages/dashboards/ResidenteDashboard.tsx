@@ -193,7 +193,7 @@ export function ResidenteDashboard() {
         aria-labelledby="residente-reporte-titulo"
         className={`rounded-2xl border p-6 shadow-sm ${
           !cargando && yaReportado
-            ? "border-amber-200 bg-amber-50 dark:border-amber-300/30 dark:bg-amber-400/10"
+            ? "aviso-aviso"
             : "border-gray-100 bg-white dark:border-night-line dark:bg-night-card"
         }`}
       >
@@ -237,7 +237,7 @@ export function ResidenteDashboard() {
             disabled={enviando || yaReportado}
             className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
               yaReportado
-                ? "bg-amber-100 text-amber-800 dark:bg-amber-300/15 dark:text-amber-200"
+                ? "aviso-aviso"
                 : "bg-amber-700 text-white hover:bg-amber-600 dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200"
             }`}
           >

@@ -32,7 +32,7 @@ export function AdminSolicitudesPage() {
     <>
       {t(clave)}
       {cantidad !== null && cantidad > 0 && (
-        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[0.6875rem] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
+        <span className="rounded-full aviso-aviso px-1.5 py-0.5 text-[0.6875rem] font-bold">
           {cantidad}
         </span>
       )}
