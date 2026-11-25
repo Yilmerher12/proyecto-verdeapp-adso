@@ -300,7 +300,7 @@ export function AppShell({ children }: AppShellProps) {
     //           visualmente el desborde sin quitar la causa, y en navegadores/
     //           casos distintos puede igual disparar la barra. La solución
     //           correcta es forzar min-w-0 en cada contenedor flex de la cadena.
-    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-night-base flex-col sm:flex-row">
+    <div className="flex h-screen w-full overflow-hidden bg-page dark:bg-night-base flex-col sm:flex-row">
       {/* ¿Qué? bg-accent-900 (antes un verde fijo #052e16, más oscuro).
           ¿Para qué? Se reportó que la barra lateral se veía "muy oscura"
           — accent-900 es un paso más claro dentro de la misma escala de
@@ -308,7 +308,7 @@ export function AppShell({ children }: AppShellProps) {
           en vez de un hex suelto (restricciones.md: accent-* es el único
           acento permitido en componentes reutilizables).
           ¿Impacto? Sigue siendo claramente más oscuro que el contenido
-          (bg-gray-200/dark:bg-night-page) y que las tarjetas
+          (bg-page/dark:bg-night-page) y que las tarjetas
           (bg-white/dark:bg-night-card) — no se pierde la jerarquía
           visual entre barra lateral y contenido. */}
       <aside
@@ -535,8 +535,8 @@ export function AppShell({ children }: AppShellProps) {
             ¿Para qué? Antes tenía una foto de hojas con una capa semitransparente
             encima; no combinaba con la paleta nueva y se pidió quitarla.
             ¿Impacto? Contraste tarjeta/fondo depende solo de los dos colores
-            sólidos (claro: gray-200, oscuro: night-page). */}
-        <main className="relative flex-1 overflow-y-auto bg-gray-200 [scrollbar-gutter:stable] dark:bg-night-page">
+            sólidos (claro: page (menta suave), oscuro: night-page). */}
+        <main className="relative flex-1 overflow-y-auto bg-page [scrollbar-gutter:stable] dark:bg-night-page">
           {/* ¿Qué? 16 px de margen lateral en celular (24 px desde `sm`).
               ¿Para qué? Con 24 px del contenedor + 24 px de la página, las
                         tarjetas ocupaban solo el 74% del ancho de un celular

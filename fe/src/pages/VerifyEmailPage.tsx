@@ -57,7 +57,7 @@ export function VerifyEmailPage() {
         : t("verifyEmail.errorMessage");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-night-base px-4">
+    <div className="min-h-screen flex items-center justify-center bg-page dark:bg-night-base px-4">
       <div className="w-full max-w-md">
         {/* Esta página no usa AuthLayout ni AppShell: el logo va aquí directo. */}
         <Link

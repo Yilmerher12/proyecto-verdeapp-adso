@@ -129,6 +129,8 @@
   /*       Los bordes decorativos siguen siendo gray-100/200 y night-line.     */
   --color-edge: #7f8f8a;
   --color-night-edge: var(--night-edge);
+  /* Fondo del contenido en modo claro: menta suave (decisión 10 de la investigación de paleta). */
+  --color-page: #e3f1ea;
 }
 
 /* ============================================================================
@@ -173,13 +175,19 @@
   --color-green-950: #06201a;
   --color-gray-50: #f4f8f7;
   --color-gray-100: #e9f0ef;
-  /* ¿Qué? gray-200 era #edf2f1, MÁS CLARO que gray-100 (#e9f0ef): la escala
-     estaba invertida y `border-gray-200` (124 usos) casi no se veía (1.13:1).
-     ¿Impacto? Ahora gray-200 es más oscuro que gray-100 (1.29:1 sobre blanco):
-     los bordes de tarjetas y divisiones se distinguen, sin llegar al peso de
-     un borde de control (ese es `edge`). Lo usan también `bg-gray-200` y
-     `hover:bg-gray-200` (11 usos), que quedan un tono más marcado. */
-  --color-gray-200: #dbe5e2;
+  /* ¿Qué? gray-200 es el borde decorativo del modo claro (`border-gray-200`, 124 usos). Pasa de
+            #dbe5e2 a #c3d9cd (1.49:1 sobre blanco; antes 1.29:1).
+     ¿Para qué? Decisión 10 de la investigación de paleta: el borde de una tarjeta debe verse, sin llegar
+                al peso de un borde de control (ese es `edge`). El fondo del contenido ya no es gray-200
+                sino el token `page` (menta suave).
+     ¿Impacto? También lo usan `bg-gray-200` y `hover:bg-gray-200` (11 usos): quedan un tono más marcado. */
+  --color-gray-200: #c3d9cd;
+  /* ¿Qué? gray-500 es el texto secundario del modo claro (`text-gray-500`, 284 usos). Pasa del gris
+            azulado de Tailwind (#6b7280) a un gris verdoso (#4f655c).
+     ¿Para qué? Sobre el fondo menta `page` el gris anterior daba 3.76:1 (con el gris que había antes);
+                #4f655c da 5.39:1 sobre `page` y 6.3:1 sobre blanco.
+     ¿Impacto? En oscuro se conserva el valor original (ver el bloque .dark). */
+  --color-gray-500: #4f655c;
 }
 
 .dark {
@@ -208,6 +216,8 @@
                 justo por debajo del 4.5:1 de WCAG para texto normal (lo midió el recorrido por los 4 roles).
      ¿Impacto? Todo texto `dark:text-gray-400` sube de brillo apenas; sobre la tarjeta pasa de 5.5 a 5.9:1. */
   --color-gray-400: #a3aab6;
+  /* gray-500 conserva en oscuro su valor original: el override verdoso es solo del modo claro. */
+  --color-gray-500: #6b7280;
 }
 
 /* ¿Qué? Estilos base aplicados al body y al root de la app. */
@@ -324,7 +334,7 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-night-base dark:text-gray-100;
+    @apply bg-page text-gray-900 dark:bg-night-base dark:text-gray-100;
     @apply min-h-screen antialiased;
     @apply transition-colors duration-200;
     margin: 0;
