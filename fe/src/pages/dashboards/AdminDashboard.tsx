@@ -624,7 +624,7 @@ export function AdminDashboard() {
                   {icon}
                   {label}
                   {soloInactivos && inactivos && inactivos[id] > 0 && (
-                    <span className="rounded-full aviso-aviso px-1.5 text-[0.6875rem] font-bold">{inactivos[id]}</span>
+                    <span className="rounded-full bg-amber-300 px-1.5 text-[0.6875rem] font-bold text-amber-950">{inactivos[id]}</span>
                   )}
                 </button>
               ))}

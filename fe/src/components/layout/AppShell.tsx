@@ -405,7 +405,7 @@ export function AppShell({ children }: AppShellProps) {
                 {labelKey && !collapsed && (
                   <p
                     aria-hidden="true"
-                    className="mb-1 truncate px-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-accent-100/50"
+                    className="mb-1 truncate px-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-accent-100/75"
                   >
                     {t(labelKey)}
                   </p>

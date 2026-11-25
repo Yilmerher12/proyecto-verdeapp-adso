@@ -154,7 +154,7 @@
   --night-card: #242e2a;
   --night-panel: #2f3c37;
   --night-field: var(--night-card);
-  --night-soft: #2f3c37;
+  --night-soft: #2b3631;
   --night-line: #384742;
   --night-hover: #2b3631;
   --night-edge: #698c7f;
@@ -203,6 +203,11 @@
   --color-green-800: #1a5038;
   --color-green-900: #123527;
   --color-green-950: #0a2018;
+  /* ¿Qué? gray-400 es el texto secundario del modo oscuro (`dark:text-gray-400`). Se aclara un poco.
+     ¿Para qué? Sobre la capa flotante y las etiquetas suaves (night-panel, night-soft) llegaba a 4.43:1,
+                justo por debajo del 4.5:1 de WCAG para texto normal (lo midió el recorrido por los 4 roles).
+     ¿Impacto? Todo texto `dark:text-gray-400` sube de brillo apenas; sobre la tarjeta pasa de 5.5 a 5.9:1. */
+  --color-gray-400: #a3aab6;
 }
 
 /* ¿Qué? Estilos base aplicados al body y al root de la app. */

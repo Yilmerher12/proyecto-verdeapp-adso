@@ -178,7 +178,7 @@ export function FilaNotificacion({
         <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
           {n.mensaje}
         </p>
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-300">
           {(mostrarConjunto || !n.nombre_conjunto) && (
             <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-medium text-gray-700 dark:border-night-line dark:bg-night-inset dark:text-gray-300">
               {n.nombre_conjunto ?? t("notificationFeed.platformLabel")}

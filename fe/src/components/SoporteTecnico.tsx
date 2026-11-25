@@ -215,7 +215,7 @@ export function SoporteTecnico() {
               <>
                 {t(labelKey)}
                 {conteos && conteos[id] > 0 && (
-                  <span className="ml-1.5 rounded-full aviso-aviso px-1.5 py-0.5 text-[0.6875rem] font-bold">
+                  <span className="ml-1.5 rounded-full bg-amber-300 px-1.5 py-0.5 text-[0.6875rem] font-bold text-amber-950">
                     {conteos[id]}
                   </span>
                 )}
