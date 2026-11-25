@@ -403,7 +403,7 @@ export function AdminConjuntoComunicadosPage() {
                           >
                             {t(`comunicados.tipos.${item.tipo}`)}
                           </span>
-                          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-field dark:text-gray-300">
+                          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-soft dark:text-gray-300">
                             {item.nombre_conjunto}
                           </span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -585,7 +585,7 @@ export function AdminConjuntoComunicadosPage() {
             )}
 
             {editando && (
-              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-night-field/60">
+              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-night-soft/60">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t("comunicados.admin.fields.conjunto")} ·{" "}
                   {t("comunicados.admin.fields.destinatarios")}

@@ -479,7 +479,7 @@ export function AdminConjuntoAgendaPage() {
             <InsigniaAccionImagen icono={ExternalLink} />
           </a>
         ) : (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-night-field dark:text-gray-400">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-night-soft dark:text-gray-400">
             <Archive className="icon-md" />
           </div>
         )}
@@ -782,7 +782,7 @@ export function AdminConjuntoAgendaPage() {
  } ${
  formatoDescarga === formato
  ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
- : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
+ : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-night-soft dark:text-gray-300 dark:hover:bg-night-hover"
  }`}
                   >
                     <input

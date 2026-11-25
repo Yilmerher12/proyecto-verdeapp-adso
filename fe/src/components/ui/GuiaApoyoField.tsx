@@ -107,7 +107,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "archivo"
               ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
-              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-soft dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
           {t("guiaApoyo.tabUpload")}
@@ -121,7 +121,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "link"
               ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
-              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-soft dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
           {t("guiaApoyo.tabLink")}
@@ -153,7 +153,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           )}
         </>
       ) : value ? (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-night-line dark:bg-night-field">
+        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-night-line dark:bg-night-soft">
           <FileText className="icon-md shrink-0 text-gray-500 dark:text-gray-400" />
           <span className="min-w-0 flex-1 truncate text-xs text-gray-600 dark:text-gray-300">
             {value.split("/").pop()}
@@ -168,7 +168,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           </button>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-edge bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-edge dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-edge bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-edge dark:bg-night-soft dark:text-gray-400 dark:hover:bg-night-hover">
           {subiendo ? (
             <>
               <Spinner size="sm" tone="current" />

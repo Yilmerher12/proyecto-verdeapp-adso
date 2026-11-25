@@ -35,10 +35,10 @@ export function ProgressBar({ value, label, className = "", compacta = false }: 
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={porcentaje}
-        className={`${compacta ? "h-1" : "h-1.5"} w-full overflow-hidden rounded-full bg-gray-200 dark:bg-night-line`}
+        className={`${compacta ? "h-1" : "h-1.5"} w-full overflow-hidden rounded-full bg-gray-200 dark:bg-night-track`}
       >
         <div
-          className={`h-full rounded-full bg-accent-600 dark:bg-accent-400 ${
+          className={`h-full rounded-full bg-accent-600 dark:bg-accent-300 ${
             determinada ? "transition-[width] duration-200 ease-out" : "w-2/5 animate-barra-indeterminada"
           }`}
           style={determinada ? { width: `${porcentaje}%` } : undefined}

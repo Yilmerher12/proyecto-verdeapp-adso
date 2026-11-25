@@ -67,7 +67,7 @@ const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
 function InfoField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-gray-50 dark:bg-night-field/60 px-4 py-3">
+    <div className="rounded-xl bg-gray-50 dark:bg-night-soft/60 px-4 py-3">
       <p className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
         {icon}
         {label}

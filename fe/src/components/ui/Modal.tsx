@@ -151,7 +151,7 @@ export function Modal({
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
-        className={`animate-scale-in relative my-auto flex max-h-full w-full flex-col ${extraWide ? "max-w-5xl" : wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-night-panel`}
+        className={`animate-scale-in relative my-auto flex max-h-full w-full flex-col ${extraWide ? "max-w-5xl" : wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-night-panel dark:[--night-field:var(--night-panel)]`}
         onClick={(e) => e.stopPropagation()}
       >
         <button

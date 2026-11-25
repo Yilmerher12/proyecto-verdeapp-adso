@@ -42,7 +42,7 @@ const TAMANO_PAGINA = 10;
 const CLASE_PRIORIDAD: Record<PrioridadSoporte, string> = {
   ALTA: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300",
   MEDIA: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200",
-  BAJA: "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300",
+  BAJA: "bg-gray-100 text-gray-600 dark:bg-night-soft dark:text-gray-300",
 };
 
 // ¿Qué? Barra de color a la izquierda de cada solicitud: se ve la prioridad de lejos.
@@ -303,7 +303,7 @@ export function SoporteTecnico() {
                     )}
 
                     {abierta && s.respuesta && respondiendoId !== s.id && (
-                      <div className="mt-3 rounded-lg bg-gray-50 p-3 dark:bg-night-field">
+                      <div className="mt-3 rounded-lg bg-gray-50 p-3 dark:bg-night-soft">
                         <p className="text-xs font-bold text-gray-600 dark:text-gray-400">
                           {t("soporteAdmin.respuestaEnviada", { fecha: formatearFechaCreacion(s.respondida_at ?? s.created_at) })}
                         </p>

@@ -135,7 +135,7 @@ export function MenuAcciones({ ariaLabel, grupos, etiqueta }: MenuAccionesProps)
         onClick={() => (abierto ? cerrar(false) : abrir())}
         className={
           etiqueta
-            ? "touch-target-h focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
+            ? "touch-target-h focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-hover"
             : "touch-target focus-ring inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-night-hover"
         }
       >

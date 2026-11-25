@@ -447,7 +447,7 @@ export function AdminNovedadesPage() {
                             </span>
                           )}
                           {item.archivada && (
-                            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-field dark:text-gray-300">
+                            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-soft dark:text-gray-300">
                               {t("novedades.archivedBadge")}
                             </span>
                           )}
@@ -586,7 +586,7 @@ export function AdminNovedadesPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-night-field/60">
+              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-night-soft/60">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t("novedades.admin.fields.alcance")}
                 </p>

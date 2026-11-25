@@ -78,7 +78,7 @@ export function CodigoAccesoConjunto({
           <button
             type="button"
             onClick={copiarCodigo}
-            className="touch-target focus-ring absolute right-1 top-1/2 flex -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-night-field"
+            className="touch-target focus-ring absolute right-1 top-1/2 flex -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-night-hover"
             aria-label={t(
               copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
             )}

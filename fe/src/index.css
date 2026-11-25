@@ -100,15 +100,22 @@
   /* oscuros casi iguales (1.0 a 1.27:1 entre vecinas: sidebar, encabezado y   */
   /* tarjetas se confundían). Ahora son verdes casi neutros, cada capa un paso */
   /* más clara que la de abajo, y la separación la da el borde (night-line).   */
-  /* Orden de abajo hacia arriba: base < page < inset < card < panel.          */
-  --color-night-base: #050a08;  /* fondo raíz y sidebar (la capa más baja) */
-  --color-night-page: #101a15;  /* fondo del área de contenido y del encabezado */
-  --color-night-inset: #131f19; /* zonas hundidas: botón secundario, filas */
-  --color-night-card: #1a2b22;  /* tarjetas */
-  --color-night-panel: #20352a; /* modales, panel lateral, tarjeta de login (encima de todo) */
-  --color-night-field: #223a2d; /* campos de formulario */
-  --color-night-line: #3a5a47;  /* bordes decorativos (1.94:1 sobre la tarjeta) */
-  --color-night-hover: #243d30; /* fondo al pasar el mouse */
+  /* Orden de abajo hacia arriba: page < inset < card < panel.                 */
+  /* Paleta de colores (docs/gestion-proyecto/investigacion-paleta-colores.md): */
+  /* los valores viven en variables (--night-*, definidas en :root más abajo)   */
+  /* para poder cambiar una capa en un solo lugar y para que un contenedor      */
+  /* (el modal) pueda redefinir el color de los campos que lleva dentro.        */
+  --color-night-base: var(--night-base);       /* fondo raíz: es el mismo del contenido */
+  --color-night-page: var(--night-page);       /* fondo del área de contenido */
+  --color-night-inset: var(--night-inset);     /* zonas hundidas, un poco más oscuras que la tarjeta */
+  --color-night-card: var(--night-card);       /* tarjetas y encabezado */
+  --color-night-panel: var(--night-panel);     /* capa flotante: modales, menús, listas desplegables */
+  --color-night-field: var(--night-field);     /* campos: del color del contenedor donde están */
+  --color-night-soft: var(--night-soft);       /* relleno suave sobre la tarjeta: etiquetas, notas */
+  --color-night-line: var(--night-line);       /* bordes decorativos */
+  --color-night-hover: var(--night-hover);     /* fondo al pasar el mouse */
+  --color-night-sidebar: var(--night-sidebar); /* menú lateral: verde de marca */
+  --color-night-track: var(--night-track);     /* pista de la barra de progreso */
 
   /* ── Borde de los controles (issue #503) ───────────────────────────────── */
   /* ¿Qué? `edge` (modo claro) y `night-edge` (modo oscuro) son el borde de los  */
@@ -121,7 +128,7 @@
   /*       night-edge 3.3:1 sobre night-field y 4.0:1 sobre night-card.        */
   /*       Los bordes decorativos siguen siendo gray-100/200 y night-line.     */
   --color-edge: #7f8f8a;
-  --color-night-edge: #5a8f72;
+  --color-night-edge: var(--night-edge);
 }
 
 /* ============================================================================
@@ -136,6 +143,23 @@
              night-* definidos arriba (fondo, tarjetas, campos, bordes…).
    ============================================================================ */
 :root {
+  /* ¿Qué? Superficies del modo oscuro (decisiones 3, 4 y 11 de la investigación de paleta).
+     ¿Para qué? Capas casi iguales (1.2:1 entre vecinas, normal en oscuro): lo que debe verse
+                es el borde de los controles (night-edge, 3:1 o más).
+     ¿Impacto? --night-field vale lo mismo que la tarjeta; el Modal lo redefine con el color
+               de la capa flotante para que sus campos sigan siendo del color del contenedor. */
+  --night-base: #161d1a;
+  --night-page: #161d1a;
+  --night-inset: #1d2622;
+  --night-card: #242e2a;
+  --night-panel: #2f3c37;
+  --night-field: var(--night-card);
+  --night-soft: #2f3c37;
+  --night-line: #384742;
+  --night-hover: #2b3631;
+  --night-edge: #698c7f;
+  --night-sidebar: #143428;
+  --night-track: #121715;
   --color-green-50: #eaf7f1;
   --color-green-100: #c9ebda;
   --color-green-200: #a0ddbf;
@@ -304,7 +328,10 @@
   .dark *,
   .dark *::before,
   .dark *::after {
-    border-color: theme(--color-gray-700);
+    /* ¿Qué? El borde por defecto en oscuro era gray-700 (gris azulado, 1.44:1 sobre la tarjeta).
+       ¿Para qué? Que un borde sin color explícito use el mismo borde decorativo del resto.
+       ¿Impacto? Todo elemento con `border` sin clase de color toma night-line. */
+    border-color: var(--night-line);
   }
 
   /* ¿Qué? El ícono de calendario dentro de <input type="date"> no muestra

@@ -46,9 +46,9 @@ export function CoberturaConjunto({ conjunto }: { conjunto: ConjuntoAdministrado
           <div
             role="img"
             aria-label={t("dashboards.adminConjunto.coverage.barAria", { registrados, total })}
-            className="mt-3 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-night-line"
+            className="mt-3 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-night-track"
           >
-            <div className="h-full rounded-full bg-accent-700" style={{ width: `${porcentaje}%` }} />
+            <div className="h-full rounded-full bg-accent-700 dark:bg-accent-300" style={{ width: `${porcentaje}%` }} />
           </div>
         )}
 

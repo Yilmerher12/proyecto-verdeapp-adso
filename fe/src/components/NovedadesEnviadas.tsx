@@ -54,7 +54,7 @@ const CLASE_ESTADO: Record<NovedadEnviada["estado"], string> = {
 const CLASE_PRIORIDAD: Record<NovedadEnviada["prioridad"], string> = {
   ALTA: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300",
   MEDIA: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200",
-  BAJA: "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300",
+  BAJA: "bg-gray-100 text-gray-600 dark:bg-night-soft dark:text-gray-300",
 };
 
 /**
@@ -359,7 +359,7 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
               />
             )}
             {n.respuesta && (
-              <div className="mt-3 rounded-xl bg-gray-50 p-3 dark:bg-night-field">
+              <div className="mt-3 rounded-xl bg-gray-50 p-3 dark:bg-night-soft">
                 <p className="text-xs font-bold text-gray-600 dark:text-gray-400">
                   {t("novedadesEnviadas.respuestaTitulo", {
                     fecha: formatearFechaCreacion(n.respondida_at ?? n.created_at),

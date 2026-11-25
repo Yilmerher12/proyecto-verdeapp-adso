@@ -47,7 +47,7 @@ export function CategoriaField({ modo, onCambiarModo, categorias, existente, onE
       className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
         modo === m
           ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
-          : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
+          : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-soft dark:text-gray-400 dark:hover:bg-night-hover"
       }`}
     >
       {texto}
