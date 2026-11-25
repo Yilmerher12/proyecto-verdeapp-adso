@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -113,6 +114,22 @@ app.add_middleware(
 #           siempre con 429 y un mensaje claro, en vez de un error genérico.
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+# ¿Qué? Respuesta 500 en JSON para cualquier error inesperado que ningún endpoint haya manejado.
+# ¿Para qué? Hallazgo de las pruebas transversales de la semana 4 (issue #655): sin este manejador,
+#           un error inesperado respondía 500 con el texto plano "Internal Server Error", mientras
+#           todo el resto del API responde JSON con la clave "detail". El frontend lee ese formato
+#           (ver fe/src/api/axios.ts) y con texto plano no tenía qué mostrar.
+# ¿Impacto? El cuerpo es siempre el mismo mensaje fijo: nunca lleva el texto del error, ni SQL, ni
+#           rutas de archivos. El detalle no se pierde: la excepción sigue subiendo hasta Uvicorn,
+#           que la registra con su traza en el log del servidor. Los errores que ya se manejan
+#           (HTTPException, 422 de validación, 429 del límite de peticiones) no pasan por aquí.
+#           Una respuesta 500 sigue sin llevar las cabeceras CORS (las agrega un middleware que
+#           este error se salta), así que en el navegador puede seguir viéndose como error de CORS.
+@app.exception_handler(Exception)
+async def _error_interno_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(status_code=500, content={"detail": "Error interno del servidor."})
 
 # ¿Qué? Cabeceras HTTP de seguridad aplicadas a TODA respuesta del backend.
 # ¿Para qué? OWASP A05 (Security Misconfiguration): sin esto, el navegador
