@@ -151,13 +151,14 @@ def test_should_respond_422_with_json_and_no_internal_details_when_the_body_is_m
     assert "Traceback" not in respuesta.text
 
 
-def test_should_not_leak_stack_trace_or_sql_when_an_unexpected_error_happens():
+def test_should_respond_500_with_json_and_not_leak_stack_trace_or_sql_when_an_unexpected_error_happens():
     # Arrange: se agrega una ruta que siempre falla y se quita al terminar.
-    # ¿Qué? Hallazgo de la semana 4: hoy este caso responde 500 con el texto plano
+    # ¿Qué? Hallazgo de la semana 4: este caso respondía 500 con el texto plano
     #       "Internal Server Error", y todo el resto del API responde JSON con "detail".
-    # ¿Para qué? Este test solo exige lo que hoy es cierto y es lo más grave: que no se
-    #           filtre el stack trace, ni SQL, ni nombres de archivos.
-    # ¿Impacto? El formato distinto (texto en vez de JSON) queda anotado en el PR, sin corregir.
+    #       Se corrigió con un manejador en app/main.py, y esta prueba lo fija.
+    # ¿Para qué? Que un error inesperado llegue en el mismo formato que los demás, y que
+    #           además no se filtre el stack trace, ni SQL, ni nombres de archivos.
+    # ¿Impacto? Si alguien quita el manejador, vuelve el texto plano y esta prueba falla.
     def ruta_que_falla():
         raise RuntimeError('SELECT * FROM usuarios WHERE password = "secreto"')
 
@@ -170,7 +171,9 @@ def test_should_not_leak_stack_trace_or_sql_when_an_unexpected_error_happens():
     finally:
         app.router.routes = [r for r in app.router.routes if getattr(r, "path", "") != "/__ruta_que_falla"]
 
-    # Assert
+    # Assert: 500, en JSON y con el mensaje fijo, sin nada del error original.
     assert respuesta.status_code == 500
+    assert respuesta.headers["content-type"].startswith("application/json")
+    assert respuesta.json() == {"detail": "Error interno del servidor."}
     for texto_prohibido in ("Traceback", "SELECT", "secreto", "RuntimeError", ".py"):
         assert texto_prohibido not in respuesta.text
