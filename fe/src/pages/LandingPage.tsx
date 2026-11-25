@@ -120,7 +120,7 @@ function PilarCard({
     <div
       ref={ref}
       style={{ transitionDelay: visible ? `${index * 120}ms` : "0ms" }}
-      className={`text-left transition-all duration-700 ease-out dark:rounded-2xl dark:border dark:border-night-line dark:bg-night-card dark:p-6 ${
+      className={`text-left transition-all duration-700 ease-out ${
         visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
     >
@@ -131,7 +131,7 @@ function PilarCard({
         <span className="text-[0.6875rem] font-bold tracking-widest text-accent-300">{numero}</span>
       </div>
       <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
-      <p className="text-sm leading-relaxed text-white/60 dark:text-gray-400">
+      <p className="text-sm leading-relaxed text-white/70">
         {descripcion}
       </p>
     </div>
@@ -452,7 +452,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
           {/* En modo claro la foto se asoma con un velo blanco; en modo oscuro
               se asoma igual, pero con un velo verde oscuro — así el efecto de
               "la foto sigue el scroll" se ve en los dos temas, no solo en claro. */}
-          <div className="absolute inset-0 bg-white/90 dark:bg-night-page/90" aria-hidden="true" />
+          <div className="absolute inset-0 bg-white/90 dark:bg-night-page/80" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-5xl">
             <div className="mb-14 text-center">
@@ -495,7 +495,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
         {/* Fondo sólido del verde de marca (antes un degradado). En modo
             oscuro accent-900 ya es la versión "de noche" de la paleta. */}
         <section
-          className="relative overflow-hidden bg-accent-900 px-6 py-16 dark:bg-night-inset sm:py-20"
+          className="relative overflow-hidden bg-accent-900 px-6 py-16 sm:py-20"
           aria-labelledby="pilares-heading"
         >
           <div className="relative mx-auto max-w-5xl">
@@ -529,10 +529,9 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
       </main>
 
       {/* ── FOOTER ── */}
-      {/* En modo oscuro el footer necesita verse claramente MÁS oscuro que el
-          fondo de "Pilares" (verde accent-900) —
-          si usan un tono parecido, las dos secciones se leen como una sola,
-          sin ningún corte entre ellas. */}
+      {/* En modo oscuro el footer usa el fondo del sistema (night-base, igual al del contenido de los
+          paneles), que se separa del verde de marca de "Pilares" con un contraste de 1.2:1 más la línea
+          de arriba. Decisión 9 de docs/gestion-proyecto/investigacion-paleta-colores.md. */}
       <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-night-line dark:bg-night-base">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
