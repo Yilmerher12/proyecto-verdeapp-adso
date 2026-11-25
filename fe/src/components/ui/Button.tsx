@@ -55,19 +55,45 @@ export function Button({
     //       oficial de contraste WCAG durante la auditoría RNF-003.
     primary:
       "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",
+    // ¿Qué? El secundario se parece a un campo: mismo color que su contenedor y borde de control
+    //       (3:1 o más). En oscuro ya no lleva relleno propio (antes night-inset, casi igual al fondo).
+    // ¿Para qué? Decisión 5 de docs/gestion-proyecto/investigacion-paleta-colores.md: un secundario
+    //            que se distinga de la tarjeta, del modal y del menú lateral.
+    // ¿Impacto? Al pasar el mouse toma un relleno suave: night-hover (se nota tanto sobre la tarjeta
+    //           como sobre el modal).
     secondary:
-      "bg-white text-gray-700 border border-edge hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-edge dark:hover:bg-night-hover",
+      "bg-white text-gray-900 border border-edge hover:bg-accent-50 dark:bg-transparent dark:text-gray-100 dark:border-night-edge dark:hover:bg-night-hover",
     danger:
       "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700",
     // ¿Qué? Acción delicada pero reversible (ámbar sólido): la de las confirmaciones de tipo "warning". accent: amber-700 con texto blanco
     //       cumple el contraste (amber-600 no llega a 4.5:1).
     warning:
       "bg-amber-700 text-white hover:bg-amber-800 dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200",
-    // ¿Qué? Mismos colores que ya usaban a mano los botones de borde rojo (issue #640): texto red-700, borde red-300 y,
-    //       en modo oscuro, borde translúcido y texto red-300.
+    // ¿Qué? Peligro de menos peso: texto red-700 y borde red-600 (claro); texto red-300 y borde red-400
+    //       sólido (oscuro).
+    // ¿Para qué? Decisión 5 de la investigación de paleta: el borde rojo debe verse. En oscuro el borde
+    //            era red-400 al 30 % (1.60:1 sobre la tarjeta); sólido da 5.06:1.
+    // ¿Impacto? El rojo sólido (variante danger) queda para el botón de confirmar dentro del modal.
     dangerOutline:
-      "bg-white text-red-700 border border-red-300 hover:bg-red-50 dark:bg-transparent dark:text-red-300 dark:border-red-400/30 dark:hover:bg-red-400/10",
+      "bg-white text-red-700 border border-red-600 hover:bg-red-50 dark:bg-transparent dark:text-red-300 dark:border-red-400 dark:hover:bg-red-400/15",
   };
+
+  // ¿Qué? Aspecto de un botón desactivado: neutro, nunca el color de la variante atenuado.
+  // ¿Para qué? Decisión 13 de la investigación de paleta: un primario desactivado no debe verse como un
+  //            verde pálido sino como un botón inactivo. WCAG no exige contraste a los controles inactivos.
+  // ¿Impacto? Reemplaza al aspecto normal (incluido el hover) cuando el botón está desactivado o lleva
+  //           aria-disabled. Mientras carga (isLoading) conserva su color y se atenúa, para que el
+  //           spinner siga leyéndose como "trabajando" y no como "inactivo".
+  const inactivoLleno = "bg-gray-200 text-gray-600 dark:bg-night-soft dark:text-gray-400";
+  const inactivoBorde = "bg-transparent text-gray-500 border border-gray-200 dark:text-gray-400 dark:border-night-line";
+  const inactivoClasses = {
+    primary: inactivoLleno,
+    danger: inactivoLleno,
+    warning: inactivoLleno,
+    secondary: inactivoBorde,
+    dangerOutline: inactivoBorde,
+  };
+  const inactivo = !isLoading && (disabled || resto["aria-disabled"] === true || resto["aria-disabled"] === "true");
 
   // ¿Qué? Clases CSS según el tamaño elegido.
   // ¿Para qué? Permitir botones de diferentes tamaños según el contexto.
@@ -92,7 +118,7 @@ export function Button({
       disabled={disabled || isLoading}
       aria-busy={isLoading ? true : (ariaBusy ?? false)}
       aria-label={ariaLabel ?? (isLoading ? t("common.processing") : undefined)}
-      className={`inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors duration-200 focus-ring disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : "whitespace-nowrap"}`}
+      className={`inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors duration-200 focus-ring disabled:cursor-not-allowed aria-disabled:cursor-not-allowed ${isLoading ? "opacity-60" : ""} ${inactivo ? inactivoClasses[variant] : variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : "whitespace-nowrap"}`}
     >
       {/* ¿Qué? Spinner SVG animado que aparece durante la carga. */}
       {/* ¿Para qué? Feedback visual de que la acción está procesándose. */}

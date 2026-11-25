@@ -141,6 +141,32 @@ describe("Button", () => {
     });
   });
 
+  // ¿Qué? Un botón desactivado se ve neutro (decisión 13 de la investigación de paleta), no como su color atenuado.
+  // ¿Para qué? Que un principal desactivado no parezca un verde pálido sino un botón inactivo.
+  // ¿Impacto? Mientras carga conserva el color de su variante (y se atenúa) para que el spinner se lea como "trabajando".
+  describe("desactivado neutro", () => {
+    it("un principal desactivado deja el verde y pasa a gris", () => {
+      render(<Button disabled>Guardar</Button>);
+      const boton = screen.getByRole("button", { name: "Guardar" });
+      expect(boton).toHaveClass("bg-gray-200");
+      expect(boton).not.toHaveClass("bg-accent-700");
+    });
+
+    it("aria-disabled también lo deja neutro", () => {
+      render(<Button variant="secondary" aria-disabled={true}>Descargar</Button>);
+      const boton = screen.getByRole("button", { name: "Descargar" });
+      expect(boton).toHaveClass("bg-transparent");
+      expect(boton).not.toHaveClass("hover:bg-accent-50");
+    });
+
+    it("cargando conserva el color de la variante", () => {
+      render(<Button isLoading>Guardar</Button>);
+      const boton = screen.getByRole("button");
+      expect(boton).toHaveClass("bg-accent-700", "opacity-60");
+      expect(boton).not.toHaveClass("bg-gray-200");
+    });
+  });
+
   describe("variante warning (issue #640)", () => {
     it("es ámbar sólido con letra blanca, para las confirmaciones delicadas", () => {
       render(<Button variant="warning">Reportar</Button>);
@@ -152,7 +178,7 @@ describe("Button", () => {
     it("lleva borde rojo, sin fondo rojo sólido", () => {
       render(<Button variant="dangerOutline">Rechazar</Button>);
       const boton = screen.getByRole("button", { name: "Rechazar" });
-      expect(boton).toHaveClass("border-red-300", "text-red-700");
+      expect(boton).toHaveClass("border-red-600", "text-red-700");
       expect(boton).not.toHaveClass("bg-red-600");
     });
 

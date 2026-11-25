@@ -674,10 +674,13 @@
              conserva el contorno por defecto del navegador, que sí se ve.
    ============================================================================ */
 @utility focus-ring {
-  @apply focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:outline-none dark:focus-visible:ring-accent-400;
+  /* Decisión 13 de la investigación de paleta: anillo de 2 px con una separación de 2 px entre el
+     control y el anillo, del color de acento (menta en oscuro, 8.13:1 sobre la tarjeta). El color de
+     la separación es el de la superficie más común (blanco / tarjeta). */
+  @apply focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:ring-accent-600 focus-visible:outline-none dark:focus-visible:ring-offset-night-card dark:focus-visible:ring-accent-300;
 }
 @utility link-text {
-  @apply focus-ring cursor-pointer font-semibold text-accent-700 underline underline-offset-2 transition-colors hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-300;
+  @apply focus-ring cursor-pointer font-semibold text-accent-700 underline underline-offset-2 transition-colors hover:text-accent-800 dark:text-accent-300 dark:hover:text-accent-200;
 }
 
 /* ============================================================================
