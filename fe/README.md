@@ -320,15 +320,18 @@ export default defineConfig({
      y "Bosque Andino" (oscuro) en :root y .dark, más abajo en el archivo. */
   --color-accent-600: var(--color-green-600); /* …y así del 50 al 950 */
 
-  /* Superficies del modo oscuro: siempre con dark:, ej. dark:bg-night-card */
-  --color-night-base: #050f0a;  /* fondo raíz */
-  --color-night-page: #0a1510;  /* fondo de los paneles */
-  --color-night-card: #12231a;  /* tarjetas */
-  --color-night-panel: #0f2018; /* modales, barras fijas */
-  --color-night-inset: #0c1a12; /* zonas hundidas */
-  --color-night-field: #1a3324; /* campos de formulario */
-  --color-night-line: #23392b;  /* bordes */
-  --color-night-hover: #23392b; /* hover */
+  /* Superficies del modo oscuro: siempre con dark:, ej. dark:bg-night-card.
+     Cada una apunta a una variable (--night-*, definida en :root) para poder
+     cambiar una capa en un solo lugar. Los valores y su razón están en
+     docs/gestion-proyecto/investigacion-paleta-colores.md */
+  --color-night-page: var(--night-page);       /* #161d1a fondo de los paneles */
+  --color-night-card: var(--night-card);       /* #242e2a tarjetas, encabezado y menú lateral */
+  --color-night-panel: var(--night-panel);     /* #2f3c37 capa flotante: modales, menús */
+  --color-night-inset: var(--night-inset);     /* #1d2622 zonas hundidas */
+  --color-night-field: var(--night-field);     /* campos: el color de su contenedor */
+  --color-night-line: var(--night-line);       /* #384742 bordes decorativos */
+  --color-night-edge: var(--night-edge);       /* #698c7f borde de los controles */
+  --color-page: #e3f1ea;                       /* fondo del contenido en modo claro */
 }
 
 /* Escala de íconos: la única forma de dar tamaño a un ícono de lucide */

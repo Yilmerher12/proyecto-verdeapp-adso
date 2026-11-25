@@ -208,7 +208,7 @@ Se compararon cuatro niveles de claridad contra el actual. Se eligió el **nivel
 | Variante | Al pasar el mouse | Desactivado |
 | --- | --- | --- |
 | Principal | un paso de claridad (oscuro: menta `#b0e6c5`; claro: verde más profundo, `#0f5238`) | fondo de capa y texto secundario (oscuro: `#2f3c37` y `#97aaa3`, 4.7:1; claro: `#e3f1ea` y `#4f655c`, 5.4:1) |
-| Secundario | relleno suave (oscuro: `#2f3c37`; claro: `#e3f1ea`) | borde decorativo y texto secundario, sin relleno |
+| Secundario | relleno suave (oscuro: `night-hover`, `#2b3631`; claro: `accent-50`). En el código se usó `night-hover` y no `#2f3c37` porque con `#2f3c37` el hover sería invisible dentro de un modal, que es de ese color | borde decorativo y texto secundario, sin relleno |
 | Peligro | relleno rojo tenue (oscuro: rojo al 14 %; claro: `#fee2e2`) | igual que el secundario desactivado |
 | Texto | color un paso más claro, subrayado | texto secundario, sin subrayado |
 
@@ -231,12 +231,14 @@ Se compararon cuatro niveles de claridad contra el actual. Se eligió el **nivel
 | Menú lateral | `#242e2a` (el color de la tarjeta) | sobre fondo 1.22:1 |
 | Texto | `#eaf0ed` | |
 | Texto secundario | `#97aaa3` | 5.7:1 sobre tarjeta |
-| Texto del menú | texto claro con opacidad (`accent-50` al 80 %) | por medir en la app al cerrar la parte del menú |
+| Texto del menú | texto claro con opacidad (`accent-50` al 80 %) | pasa el revisor de contraste (>= 4.5:1) en los 4 roles |
 | Botón principal | menta `#86d6a6`, texto `#0a2018` | 8.1:1 sobre tarjeta |
 | Barra de progreso | pista `#121715`, relleno menta `#86d6a6` | 10.5:1 entre relleno y pista |
 | Turquesa: ícono | `#67e8f9` | 9.7:1 sobre tarjeta |
 | Turquesa: etiqueta | relleno 18 % de `#22d3ee`, texto `#a5f3fc` | 7.6:1 |
 | Peligro (borde) | `#f87171` | 5.06:1 sobre tarjeta |
+| Relleno suave (`night-soft`) | `#2b3631` | `gray-400` sobre él: 4.94:1 |
+| Texto secundario (`gray-400`) | `#a3aab6` | sobre la capa flotante y las etiquetas suaves llega a 4.6:1 o más |
 
 Avisos en oscuro (relleno 18 %, borde 60 % del color pleno, sobre la tarjeta):
 
@@ -287,6 +289,25 @@ Lección: comparar paletas completas no ayuda aquí; hay que decidir **por rol**
 
 ---
 
+## Estado de la implementación
+
+Se aplicó en la rama `feat/aplicar-paleta-colores`, por partes, con un commit por parte y la suite completa de pruebas en verde en cada una:
+
+| Parte | Qué se aplicó | Archivos principales |
+| --- | --- | --- |
+| 1 | Superficies oscuras como variables, menú lateral y encabezado, borde por defecto, barra de progreso | `index.css`, `AppShell.tsx`, `Modal.tsx`, `ProgressBar.tsx`, `CoberturaConjunto.tsx` |
+| 2 | Botones: secundario con borde estándar, peligro con borde rojo, desactivado neutro, foco con separación, enlace en menta | `Button.tsx`, `index.css` |
+| 3 | Avisos y etiquetas: utilidades `aviso-exito`, `aviso-aviso`, `aviso-error`, `aviso-info`; las usan `Alert` y unas 45 cajas y etiquetas escritas a mano | `index.css`, `Alert.tsx` y 24 archivos |
+| (menú) | El menú lateral oscuro pasa del verde al color de las tarjetas (decisión 1 revisada) | `index.css` |
+| (recorrido) | Recorrido por los 4 roles con un revisor automático de contraste: rótulos del menú, hora de las notificaciones, contadores sobre la pastilla menta y `gray-400` en oscuro | `AppShell.tsx`, `NotificationFeed.tsx`, `SoporteTecnico.tsx`, `AdminDashboard.tsx`, `index.css` |
+| 4 | Turquesa como color de apoyo y violeta solo para categorías (`aviso-categoria`); se actualiza la regla de colores permitidos de `estandaresVisuales.test.ts` | 13 archivos |
+| 5 | Páginas de acceso con tarjeta del sistema; tarjetas de rol con borde de control; campos y tarjetas que usaban la capa flotante sin serlo | `AuthLayout.tsx`, `RegisterPage.tsx` y 6 archivos más |
+| 6 | Landing en oscuro: velo más suave, "Pilares" en verde de marca sin tarjetas (corrige el salto de altura entre temas), footer del sistema | `LandingPage.tsx` |
+| 7 | Modo claro: fondo menta (`bg-page`), borde decorativo `#c3d9cd`, texto secundario `#4f655c` | `index.css` y 5 archivos |
+| 8 | Documentación: `restricciones.md` (tokens, equivalencias, botones, colores), `fe/README.md` y este documento | `docs/requisitos/restricciones.md` |
+
+**Lo que falta:** la parte 9 (la tabla de valores como tokens reutilizables para la app móvil), una revisión de las gráficas y de las ilustraciones educativas (`IlustracionCategoria.tsx`, con colores hex fijos), y la decisión de si la paleta se queda: eso implica abrir el issue y el PR hacia `develop`.
+
 ## Recomendación
 
 Aplicar las 13 decisiones en este orden, empezando por la base: primero los tokens y las capas, y sobre eso los botones, los avisos y las pantallas.
@@ -309,8 +330,8 @@ El issue 1 bloquea al resto. Los demás pueden ir en paralelo cuando el 1 esté 
 
 ## Documentación que puede cambiar
 
-- [`docs/requisitos/restricciones.md`](../requisitos/restricciones.md): tabla de superficies del modo oscuro, equivalencias claro y oscuro, reglas de botones y de avisos. **Se actualiza en cada issue de implementación.**
-- [`auditoria-coherencia-temas.md`](auditoria-coherencia-temas.md) y [`auditoria-contraste-paleta-nueva.md`](auditoria-contraste-paleta-nueva.md): se rehacen las mediciones al aplicar.
+- [`docs/requisitos/restricciones.md`](../requisitos/restricciones.md): tabla de superficies del modo oscuro, equivalencias claro y oscuro, reglas de botones y de colores. **Actualizado en la parte 8** (junto con `fe/README.md`).
+- [`auditoria-coherencia-temas.md`](auditoria-coherencia-temas.md) y [`auditoria-contraste-paleta-nueva.md`](auditoria-contraste-paleta-nueva.md): **no se rehicieron**; miden la paleta anterior. En su lugar, el recorrido por los 4 roles con el revisor automático de contraste (0 fallos de texto en claro y oscuro) cubre lo mismo para la paleta nueva. Si la paleta se queda, hay que reemplazar esas dos auditorías.
 - Ninguna HU ni RF cambia: la conclusión no modifica requisitos funcionales.
 
 ## Bocetos
