@@ -592,7 +592,7 @@ export function RecicladorDashboard() {
               className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm"
             >
               <div className="flex items-center gap-2">
-                <CircleCheck className="icon-md text-accent-600 dark:text-accent-400" />
+                <CircleCheck className="icon-md text-accent-600 dark:text-accent-300" />
                 <h2 id="reciclador-auditoria-al-dia-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
                   {t("dashboards.reciclador.auditoria.alDiaTitle")}
                 </h2>

@@ -212,7 +212,7 @@ export function AceptarInvitacionPage() {
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4 animate-fade-in">
             <div className="mx-auto w-20 h-20 bg-accent-100 flex items-center justify-center rounded-full border border-accent-200 dark:bg-accent-300/10 dark:border-accent-300/40">
-              <BadgeCheck className="icon-xl text-accent-600 dark:text-accent-400 icon-appear icon-hop" />
+              <BadgeCheck className="icon-xl text-accent-600 dark:text-accent-300 icon-appear icon-hop" />
             </div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.success.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
@@ -247,7 +247,7 @@ export function AceptarInvitacionPage() {
 
           <div className="mb-6 p-4 bg-accent-50/50 border border-accent-100 rounded-xl dark:bg-accent-300/10 dark:border-accent-300/40">
             <div className="flex items-center gap-2 mb-2">
-              <Building className="icon-md text-accent-600 dark:text-accent-400" />
+              <Building className="icon-md text-accent-600 dark:text-accent-300" />
               <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
                 {t("aceptarInvitacion.form.willAdminister")}
               </span>
@@ -306,7 +306,7 @@ export function AceptarInvitacionPage() {
                 />
                 <PasswordStrengthIndicator password={formData.password} />
                 {fieldErrors.password && (
-                  <p className="text-xs text-red-500 dark:text-red-300 mt-1 font-medium">{fieldErrors.password}</p>
+                  <p className="text-xs text-red-600 dark:text-red-300 mt-1 font-medium">{fieldErrors.password}</p>
                 )}
               </div>
               <div>
@@ -320,7 +320,7 @@ export function AceptarInvitacionPage() {
                   disablePaste
                 />
                 {fieldErrors.confirmPassword && (
-                  <p className="text-xs text-red-500 dark:text-red-300 mt-1 font-medium">{fieldErrors.confirmPassword}</p>
+                  <p className="text-xs text-red-600 dark:text-red-300 mt-1 font-medium">{fieldErrors.confirmPassword}</p>
                 )}
               </div>
             </div>

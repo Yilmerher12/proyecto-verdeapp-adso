@@ -83,7 +83,7 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
   URGENTE: "aviso-error",
   CONVOCATORIA: "aviso-categoria",
   MANTENIMIENTO: "aviso-aviso",
-  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300",
 };
 
 // ¿Qué? Barra delgada (3 px) a la izquierda del contenido de cada fila, con aire alrededor: el mismo color de la etiqueta del tipo
@@ -525,7 +525,7 @@ export function AdminConjuntoComunicadosPage() {
                     htmlFor="comunicado-conjunto"
                     className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
                   >
-                    {t("comunicados.admin.fields.conjunto")} <span className="text-red-500">*</span>
+                    {t("comunicados.admin.fields.conjunto")} <span className="text-red-600 dark:text-red-300">*</span>
                   </label>
                   <select
                     id="comunicado-conjunto"
@@ -556,7 +556,7 @@ export function AdminConjuntoComunicadosPage() {
                     className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
                   >
                     {t("comunicados.admin.fields.destinatarios")}{" "}
-                    <span className="text-red-500">*</span>
+                    <span className="text-red-600 dark:text-red-300">*</span>
                   </span>
                   <div
                     role="radiogroup"
@@ -572,7 +572,7 @@ export function AdminConjuntoComunicadosPage() {
                         onClick={() => setForm({ ...form, destinatarios: d })}
                         className={`flex-1 cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                           form.destinatarios === d
-                            ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                            ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300"
                             : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-night-line dark:text-gray-300"
                         }`}
                       >
@@ -605,7 +605,7 @@ export function AdminConjuntoComunicadosPage() {
                 htmlFor="comunicado-tipo"
                 className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
               >
-                {t("comunicados.admin.fields.tipo")} <span className="text-red-500">*</span>
+                {t("comunicados.admin.fields.tipo")} <span className="text-red-600 dark:text-red-300">*</span>
               </label>
               <select
                 id="comunicado-tipo"
@@ -626,7 +626,7 @@ export function AdminConjuntoComunicadosPage() {
                 htmlFor="comunicado-texto"
                 className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
               >
-                {t("comunicados.admin.fields.texto")} <span className="text-red-500">*</span>
+                {t("comunicados.admin.fields.texto")} <span className="text-red-600 dark:text-red-300">*</span>
               </label>
               <textarea
                 id="comunicado-texto"
@@ -655,7 +655,7 @@ export function AdminConjuntoComunicadosPage() {
                       className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
                     >
                       {t("comunicados.admin.fields.fechaEvento")}{" "}
-                      <span className="text-red-500">*</span>
+                      <span className="text-red-600 dark:text-red-300">*</span>
                     </label>
                     <input
                       id="comunicado-fecha-evento"

@@ -73,7 +73,7 @@ export function VistaPreviaModulo({ modulo }: { modulo: DatosModulo }) {
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{categoria}</span>
                 <span className="text-base font-bold leading-snug text-gray-900 dark:text-white">{titulo}</span>
               </span>
-              <ChevronRight className="icon-md my-auto mr-3 shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
+              <ChevronRight className="icon-md my-auto mr-3 shrink-0 text-accent-700 dark:text-accent-300" aria-hidden="true" />
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-300">{portada ? t(`${p}.catalogHint`) : t(`${p}.catalogNoCover`)}</p>
           </div>

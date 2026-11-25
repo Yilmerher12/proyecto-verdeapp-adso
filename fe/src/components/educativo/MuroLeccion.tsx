@@ -68,7 +68,7 @@ export function MuroLeccion({
           <div className={`flex min-w-0 flex-col justify-center gap-4 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card ${compacto ? "" : "lg:flex-1"}`}>
             {introduccion && (
               <>
-                <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
+                <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-300">
                   {t("leccionMuro.about")}
                 </span>
                 <ReactMarkdown components={COMPONENTES_MARKDOWN}>{introduccion}</ReactMarkdown>
@@ -102,7 +102,7 @@ export function MuroLeccion({
                   <img src={imagen} alt="" className="h-48 w-full object-cover" />
                 ) : (
                   <div className="flex h-12 items-center px-6 pt-6" aria-hidden="true">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300">
                       <Icono className="icon-md" />
                     </span>
                   </div>

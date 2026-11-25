@@ -19,7 +19,7 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
   URGENTE: "aviso-error",
   CONVOCATORIA: "aviso-categoria",
   MANTENIMIENTO: "aviso-aviso",
-  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300",
 };
 
 // ¿Qué? Orden fijo de los filtros por tipo (solo salen los tipos que de verdad hay).

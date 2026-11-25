@@ -106,7 +106,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           disabled={subiendo}
           className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "archivo"
-              ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
+              ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-soft dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
@@ -120,7 +120,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           disabled={subiendo}
           className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "link"
-              ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
+              ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-soft dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >

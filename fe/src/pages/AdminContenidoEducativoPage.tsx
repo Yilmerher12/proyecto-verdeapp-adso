@@ -424,7 +424,7 @@ export function AdminContenidoEducativoPage() {
     <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex items-center gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
-          <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
+          <BookOpen className="icon-xl text-accent-700 dark:text-accent-300" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t(`${p}.title`)}</h1>
@@ -707,7 +707,7 @@ export function AdminContenidoEducativoPage() {
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label htmlFor="contenido-cuerpo" className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {t(`${p}.fields.content`)} <span className="text-red-500">*</span>
+                    {t(`${p}.fields.content`)} <span className="text-red-600 dark:text-red-300">*</span>
                   </label>
                   <span id="contenido-cuerpo-contador" className="text-xs text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length, max: CONTENIDO_CUERPO_MAX_LENGTH })}
@@ -813,7 +813,7 @@ export function AdminContenidoEducativoPage() {
                     {fieldErrors.url_video}
                   </p>
                 ) : form.url_video?.trim() && (
-                  <p className={`mt-1 text-xs font-semibold ${idVideoReconocido ? "text-accent-600 dark:text-accent-400" : "text-amber-600 dark:text-amber-200"}`}>
+                  <p className={`mt-1 text-xs font-semibold ${idVideoReconocido ? "text-accent-600 dark:text-accent-300" : "text-amber-600 dark:text-amber-200"}`}>
                     {idVideoReconocido ? t(`${p}.fields.videoRecognized`) : t(`${p}.fields.videoNotRecognized`)}
                   </p>
                 )}

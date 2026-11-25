@@ -70,7 +70,7 @@ export function CategoriaEducativaPage() {
 
       {/* ¿Qué? El título de la categoría y el de "Sigue aprendiendo" van en una tarjeta (ver CatalogoEducativoPage). */}
       <header className="space-y-3 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card">
-        <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
+        <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-300">
           {categoriaDecodificada}
         </span>
         <h1 className="max-w-3xl text-2xl font-bold leading-tight text-gray-900 dark:text-white">
@@ -79,7 +79,7 @@ export function CategoriaEducativaPage() {
         {temas.length > 0 && (
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
             {visto && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-300">
                 <Check className="icon-sm" aria-hidden="true" />
                 {t("categoriaEducativa.seen")}
               </span>
@@ -130,7 +130,7 @@ export function CategoriaEducativaPage() {
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{nombre}</span>
                     <span className="text-base font-bold leading-snug text-gray-900 dark:text-white">{modulo.titulo_tema}</span>
                   </span>
-                  <ChevronRight className="icon-md my-auto mr-4 shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
+                  <ChevronRight className="icon-md my-auto mr-4 shrink-0 text-accent-700 dark:text-accent-300" aria-hidden="true" />
                 </Link>
               );
             })}

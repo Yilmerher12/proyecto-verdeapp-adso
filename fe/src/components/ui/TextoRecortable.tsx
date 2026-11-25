@@ -61,7 +61,7 @@ export function TextoRecortable({ texto, lineas = 3, className = "" }: TextoReco
           onClick={() => setAbierto((v) => !v)}
           aria-expanded={abierto}
           aria-controls={idTexto}
-          className="focus-ring mt-1 cursor-pointer text-sm font-semibold text-accent-700 hover:underline dark:text-accent-400"
+          className="focus-ring mt-1 cursor-pointer text-sm font-semibold text-accent-700 hover:underline dark:text-accent-300"
         >
           {t(abierto ? "common.viewLess" : "common.viewMore")}
         </button>

@@ -94,7 +94,7 @@ export function SolicitudAdminConjuntoInfo({ variante = "registro" }: { variante
                 title={t("auth.register.adminRequest.copyEmail")}
               >
                 {copiado ? (
-                  <Check className="icon-sm text-accent-600 dark:text-accent-400" />
+                  <Check className="icon-sm text-accent-600 dark:text-accent-300" />
                 ) : (
                   <Copy className="icon-sm" />
                 )}
@@ -109,7 +109,7 @@ export function SolicitudAdminConjuntoInfo({ variante = "registro" }: { variante
             <ul className="space-y-1.5">
               {DOCUMENTOS.map(({ clave, Icon }) => (
                 <li key={clave} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Icon className="icon-sm mt-0.5 shrink-0 text-accent-600 dark:text-accent-400" aria-hidden="true" />
+                  <Icon className="icon-sm mt-0.5 shrink-0 text-accent-600 dark:text-accent-300" aria-hidden="true" />
                   <span>{t(`auth.register.adminRequest.${clave}`)}</span>
                 </li>
               ))}

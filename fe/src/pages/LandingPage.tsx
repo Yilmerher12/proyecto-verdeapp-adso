@@ -75,7 +75,7 @@ function PasoCard({
           className="absolute top-9 left-[calc(50%+2.75rem)] right-[calc(-50%+1.25rem)] hidden items-center sm:flex"
         >
           <div className="h-0.5 flex-1 bg-accent-200 dark:bg-night-line" />
-          <ArrowRight className="icon-md -ml-1 shrink-0 text-accent-600 dark:text-accent-400" />
+          <ArrowRight className="icon-md -ml-1 shrink-0 text-accent-600 dark:text-accent-300" />
         </div>
       )}
 
@@ -456,7 +456,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
           <div className="relative mx-auto max-w-5xl">
             <div className="mb-14 text-center">
-              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-accent-600 dark:text-accent-400">
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-accent-600 dark:text-accent-300">
                 {t("landing.howItWorks.eyebrow")}
               </p>
               <h2

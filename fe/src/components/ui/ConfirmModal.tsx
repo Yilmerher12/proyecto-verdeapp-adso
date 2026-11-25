@@ -66,7 +66,7 @@ const ESTILOS_VARIANTE = {
   },
   primary: {
     circulo: "bg-accent-50 dark:bg-accent-300/10",
-    icono: "text-accent-600 dark:text-accent-400",
+    icono: "text-accent-600 dark:text-accent-300",
     boton: "bg-accent-700 hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",
   },
 } as const;

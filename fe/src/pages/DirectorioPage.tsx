@@ -465,7 +465,7 @@ function InfoBanner({
       }
     >
       <div className="flex gap-3">
-        <Info className="icon-lg mt-0.5 shrink-0 text-accent-600 dark:text-accent-400" />
+        <Info className="icon-lg mt-0.5 shrink-0 text-accent-600 dark:text-accent-300" />
         <div className="min-w-0 flex-1 space-y-1.5 text-sm">
           <p className="font-semibold text-accent-900 dark:text-accent-200">{titulo}</p>
           <p className="text-accent-800/90 dark:text-accent-300/90">{descripcion}</p>

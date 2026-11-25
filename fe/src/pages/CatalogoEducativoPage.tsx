@@ -86,7 +86,7 @@ export function CatalogoEducativoPage() {
                 {t("catalogoEducativo.progress.title")}
               </span>
               <p className="text-base text-gray-600 dark:text-gray-300">
-                <span className="mr-2 text-2xl font-bold text-accent-700 dark:text-accent-400">{totalVistas}</span>
+                <span className="mr-2 text-2xl font-bold text-accent-700 dark:text-accent-300">{totalVistas}</span>
                 {t("catalogoEducativo.progress.of", { total: contenido.length })}
               </p>
               <div
@@ -124,7 +124,7 @@ export function CatalogoEducativoPage() {
                       ) : (
                         <IlustracionCategoria categoria={nombre} />
                       )}
-                      <span className="absolute bottom-3 left-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-accent-700 shadow dark:bg-night-card dark:text-accent-400">
+                      <span className="absolute bottom-3 left-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-accent-700 shadow dark:bg-night-card dark:text-accent-300">
                         <Icono className="icon-md" />
                       </span>
                     </div>
@@ -137,7 +137,7 @@ export function CatalogoEducativoPage() {
                       </span>
                       <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                         {visto ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 text-sm font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 text-sm font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-300">
                             <Check className="icon-sm" aria-hidden="true" />
                             {t("catalogoEducativo.seen")}
                           </span>
@@ -146,7 +146,7 @@ export function CatalogoEducativoPage() {
                             {t("catalogoEducativo.notSeen")}
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-700 dark:text-accent-400">
+                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-700 dark:text-accent-300">
                           {t("catalogoEducativo.viewLesson")}
                           <ChevronRight className="icon-md transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                         </span>
@@ -176,11 +176,11 @@ export function CatalogoEducativoPage() {
                   </span>
                 </span>
                 <span className="flex flex-1 flex-col justify-center gap-3 p-8">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-300">
                     {destacado.modulo_categoria}
                   </span>
                   <span className="text-2xl font-bold leading-snug text-gray-900 dark:text-white">{destacado.titulo_tema}</span>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-700 dark:text-accent-400">
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-700 dark:text-accent-300">
                     {t("catalogoEducativo.featuredCta")}
                     <ChevronRight className="icon-md" aria-hidden="true" />
                   </span>

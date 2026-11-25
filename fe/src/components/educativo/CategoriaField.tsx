@@ -46,7 +46,7 @@ export function CategoriaField({ modo, onCambiarModo, categorias, existente, onE
       onClick={() => onCambiarModo(m)}
       className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
         modo === m
-          ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
+          ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
           : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-soft dark:text-gray-400 dark:hover:bg-night-hover"
       }`}
     >
@@ -57,7 +57,7 @@ export function CategoriaField({ modo, onCambiarModo, categorias, existente, onE
   return (
     <div>
       <span className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
-        {t(`${p}.category`)} <span className="text-red-500">*</span>
+        {t(`${p}.category`)} <span className="text-red-600 dark:text-red-300">*</span>
       </span>
       <div className="mb-2 flex gap-1.5" role="radiogroup" aria-label={t(`${p}.categoryModeAria`)}>
         {boton("existente", t(`${p}.categoryMode.existing`))}

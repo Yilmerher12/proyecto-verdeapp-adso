@@ -142,7 +142,7 @@ export function AdminConjuntoDashboard() {
             <p className="break-words text-gray-600 dark:text-gray-300">
               {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
-            <p className="mt-1 break-all text-xs font-semibold tracking-wide text-accent-700 dark:text-accent-400">
+            <p className="mt-1 break-all text-xs font-semibold tracking-wide text-accent-700 dark:text-accent-300">
               {user?.email}
             </p>
           </div>

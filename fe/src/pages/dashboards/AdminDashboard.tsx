@@ -515,7 +515,7 @@ export function AdminDashboard() {
               <span className="font-semibold text-gray-800 dark:text-gray-200 uppercase">{fullName}</span>
               .
             </p>
-            <p className="text-xs text-accent-700 dark:text-accent-400 font-semibold mt-1">{user?.email}</p>
+            <p className="text-xs text-accent-700 dark:text-accent-300 font-semibold mt-1">{user?.email}</p>
           </div>
         </div>
       </div>
@@ -779,7 +779,7 @@ export function AdminDashboard() {
                         <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
                         {celdaNombre(r.Nombre_Completo)}
                         <td className="px-5 py-3">
-                          <span className="rounded-full bg-accent-50 dark:bg-accent-300/10 px-2.5 py-0.5 text-xs font-semibold text-accent-700 dark:text-accent-400">
+                          <span className="rounded-full bg-accent-50 dark:bg-accent-300/10 px-2.5 py-0.5 text-xs font-semibold text-accent-700 dark:text-accent-300">
                             {r.Asociacion}
                           </span>
                         </td>

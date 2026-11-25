@@ -99,7 +99,7 @@ export function FichaPuntoAcopio({ punto, variante }: FichaPuntoAcopioProps) {
               aria-label={t("directorio.copyAddress")}
               title={t("directorio.copyAddress")}
             >
-              {copiado ? <Check className="icon-sm text-accent-600 dark:text-accent-400" /> : <Copy className="icon-sm" />}
+              {copiado ? <Check className="icon-sm text-accent-600 dark:text-accent-300" /> : <Copy className="icon-sm" />}
             </button>
           </p>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{punto.nombre_localidad}</p>

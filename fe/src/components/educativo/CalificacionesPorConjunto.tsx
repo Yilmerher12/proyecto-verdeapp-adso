@@ -360,7 +360,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
 
         {avisoUltimaSemana && modo === "semana" && !enCurso && (
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-accent-300 bg-accent-50 px-4 py-3 dark:border-accent-300/40 dark:bg-accent-300/10">
-            <CalendarSearch className="icon-md shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
+            <CalendarSearch className="icon-md shrink-0 text-accent-700 dark:text-accent-300" aria-hidden="true" />
             <p className="min-w-0 flex-1 text-xs text-accent-900 dark:text-accent-200">{t(`${p}.week.lastWeekNotice`, { rango: rangoSemanaUTC(semana) })}</p>
             <Button variant="secondary" size="sm" type="button" onClick={verEstaSemana}>
               {t(`${p}.week.viewThisWeek`)}
@@ -454,7 +454,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
               aria-pressed={nivel === n}
               className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                 nivel === n
-                  ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                  ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300"
                   : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
               }`}
             >

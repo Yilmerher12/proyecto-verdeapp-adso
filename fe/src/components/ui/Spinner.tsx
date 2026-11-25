@@ -20,7 +20,7 @@ const TAMANOS = {
 } as const;
 
 const TONOS = {
-  accent: "text-accent-600 dark:text-accent-400",
+  accent: "text-accent-600 dark:text-accent-300",
   current: "",
 } as const;
 

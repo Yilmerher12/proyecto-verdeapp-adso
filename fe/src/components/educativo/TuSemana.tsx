@@ -107,12 +107,12 @@ export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
             )}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
+            <span className="block text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-300">
               {t("tuSemana.recommended")}
             </span>
             <span className="mt-1 block text-base font-bold text-gray-900 dark:text-white">{recomendado.titulo_tema}</span>
           </span>
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-700 dark:text-accent-400">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-700 dark:text-accent-300">
             {t("tuSemana.view")}
             <ChevronRight className="icon-md" aria-hidden="true" />
           </span>

@@ -364,7 +364,7 @@ export function AdminNovedadesPage() {
                     aria-pressed={alcanceFiltro === a}
                     className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                       alcanceFiltro === a
-                        ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                        ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300"
                         : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
                     }`}
                   >
@@ -564,7 +564,7 @@ export function AdminNovedadesPage() {
                     clase CSS; mismo patrón corregido en
                     AdminConjuntoComunicadosPage.tsx). */}
                 <span id="novedad-alcance-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("novedades.admin.fields.alcance")} <span className="text-red-500">*</span>
+                  {t("novedades.admin.fields.alcance")} <span className="text-red-600 dark:text-red-300">*</span>
                 </span>
                 <div role="radiogroup" aria-labelledby="novedad-alcance-label" className="grid grid-cols-2 gap-2">
                   {ALCANCES.map((a) => (
@@ -576,7 +576,7 @@ export function AdminNovedadesPage() {
                       onClick={() => setForm({ ...form, alcance: a })}
                       className={`touch-target-h cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
-                          ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                          ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300"
                           : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-night-line dark:text-gray-300"
                       }`}
                     >
@@ -606,8 +606,8 @@ export function AdminNovedadesPage() {
               <div className="space-y-3 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4 dark:border-cyan-400/30 dark:bg-cyan-400/10">
                 <div className="flex items-center justify-between gap-2">
                   <span id="novedad-conjunto-label" className="text-xs font-bold text-cyan-900 dark:text-cyan-200">
-                    {t("novedades.admin.conjunto.label")} <span className="text-red-500">*</span>{" "}
-                    <span className="font-medium text-gray-500 dark:text-gray-400">— {t("novedades.admin.conjunto.question")}</span>
+                    {t("novedades.admin.conjunto.label")} <span className="text-red-600 dark:text-red-300">*</span>{" "}
+                    <span className="font-medium text-gray-500 dark:text-gray-300">— {t("novedades.admin.conjunto.question")}</span>
                   </span>
                   {form.modoConjunto === "elegir" && form.conjuntos.length > 0 && (
                     <span className="shrink-0 text-[0.6875rem] font-bold text-cyan-700 dark:text-cyan-300">
@@ -627,7 +627,7 @@ export function AdminNovedadesPage() {
                       className={`touch-target-h cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                         form.modoConjunto === modo
                           ? "border-cyan-600 bg-cyan-100 text-cyan-900 dark:bg-cyan-400/15 dark:text-cyan-200"
-                          : "border-gray-200 bg-white text-gray-500 hover:border-cyan-300 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
+                          : "border-gray-200 bg-white text-gray-500 hover:border-cyan-300 dark:border-night-line dark:bg-night-panel dark:text-gray-300"
                       }`}
                     >
                       {modo === "elegir" ? t("novedades.admin.conjunto.pick") : t("novedades.admin.conjunto.all")}
@@ -659,13 +659,13 @@ export function AdminNovedadesPage() {
                   </div>
                 )}
 
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.example")}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-300">{t("novedades.admin.conjunto.example")}</p>
               </div>
             )}
 
             <div>
               <label htmlFor="novedad-texto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("novedades.admin.fields.texto")} <span className="text-red-500">*</span>
+                {t("novedades.admin.fields.texto")} <span className="text-red-600 dark:text-red-300">*</span>
               </label>
               <textarea
                 id="novedad-texto"

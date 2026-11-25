@@ -18,7 +18,7 @@ const STRENGTH_META: Record<
   { labelColor: string; barColor: string }
 > = {
   1: { labelColor: "text-red-600 dark:text-red-300",     barColor: "bg-red-500" },
-  2: { labelColor: "text-red-500 dark:text-red-300",     barColor: "bg-red-400" },
+  2: { labelColor: "text-red-600 dark:text-red-300",     barColor: "bg-red-400" },
   3: { labelColor: "text-orange-500 dark:text-orange-400", barColor: "bg-orange-400" },
   4: { labelColor: "text-yellow-600 dark:text-yellow-300", barColor: "bg-yellow-400" },
   5: { labelColor: "text-accent-600 dark:text-accent-500", barColor: "bg-accent-500" },

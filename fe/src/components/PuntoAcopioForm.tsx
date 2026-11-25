@@ -127,7 +127,7 @@ export function PuntoAcopioForm({
 
         <div>
           <label htmlFor="acopio-localidad" className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
-            {t("adminPuntosAcopio.fields.locality")} <span className="text-red-500">*</span>
+            {t("adminPuntosAcopio.fields.locality")} <span className="text-red-600 dark:text-red-300">*</span>
           </label>
           <select
             id="acopio-localidad"
@@ -195,7 +195,7 @@ export function PuntoAcopioForm({
       />
 
       {cambioEncargado && (
-        <p className="-mt-2 text-xs font-semibold text-accent-700 dark:text-accent-400">
+        <p className="-mt-2 text-xs font-semibold text-accent-700 dark:text-accent-300">
           {t("adminPuntosAcopio.form.managerChanged", {
             antes: encargadoAntes || t("adminPuntosAcopio.noManager"),
             despues: encargadoAhora || t("adminPuntosAcopio.noManager"),

@@ -386,7 +386,7 @@ export function RegisterPage() {
           <div className="p-6 sm:p-8 text-center max-w-sm mx-auto">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-accent-50 ring-8 ring-accent-50 dark:bg-accent-300/10 dark:ring-accent-900/20">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-300/10">
-                <MailCheck className="icon-xl text-accent-600 dark:text-accent-400" strokeWidth={2} />
+                <MailCheck className="icon-xl text-accent-600 dark:text-accent-300" strokeWidth={2} />
               </div>
             </div>
 
@@ -463,7 +463,7 @@ export function RegisterPage() {
                 onClick={() => setSearchParams({})}
                 aria-label={t("auth.register.changeRole")}
                 title={t("auth.register.changeRole")}
-                className="focus-ring absolute left-0 top-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-edge text-accent-700 transition-colors hover:bg-accent-50 dark:border-night-edge dark:text-accent-400 dark:hover:bg-accent-300/15"
+                className="focus-ring absolute left-0 top-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-edge text-accent-700 transition-colors hover:bg-accent-50 dark:border-night-edge dark:text-accent-300 dark:hover:bg-accent-300/15"
               >
                 <ArrowLeft className="icon-md" aria-hidden="true" />
               </button>
@@ -497,7 +497,7 @@ export function RegisterPage() {
                   onClick={() => setSearchParams({ rol })}
                   className="focus-ring flex cursor-pointer flex-col items-center justify-start rounded-2xl border-2 border-edge p-4 text-center transition-all hover:border-accent-400 dark:border-night-edge"
                 >
-                  <Icon className="icon-xl mb-2 text-accent-600 dark:text-accent-400" aria-hidden="true" />
+                  <Icon className="icon-xl mb-2 text-accent-600 dark:text-accent-300" aria-hidden="true" />
                   <span className="text-base font-semibold leading-tight text-gray-900 dark:text-white">{t(etiqueta)}</span>
                   <span className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t(descripcion)}</span>
                 </button>
@@ -601,13 +601,13 @@ export function RegisterPage() {
                     <div>
                       <label htmlFor="numero_bloque" className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
                       <input id="numero_bloque" type="text" name="numero_bloque" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.numero_bloque} aria-describedby={fieldErrors.numero_bloque ? "numero_bloque-error" : undefined} placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="focus-ring w-full p-2.5 border border-edge dark:border-night-edge rounded-lg mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
-                      {fieldErrors.numero_bloque && <p id="numero_bloque-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
+                      {fieldErrors.numero_bloque && <p id="numero_bloque-error" role="alert" className="text-xs text-red-600 dark:text-red-300 mt-1">{fieldErrors.numero_bloque}</p>}
                     </div>
 
                     <div>
                       <label htmlFor="apto" className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
                       <input id="apto" type="text" name="apto" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.apto} aria-describedby={fieldErrors.apto ? "apto-error" : undefined} placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="focus-ring w-full p-2.5 border border-edge dark:border-night-edge rounded-lg mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
-                      {fieldErrors.apto && <p id="apto-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
+                      {fieldErrors.apto && <p id="apto-error" role="alert" className="text-xs text-red-600 dark:text-red-300 mt-1">{fieldErrors.apto}</p>}
                     </div>
                   </div>
 
@@ -637,7 +637,7 @@ export function RegisterPage() {
                       disabled={!formData.id_conjunto_residencial}
                       className="focus-ring w-full p-2.5 border border-edge dark:border-night-edge rounded-lg mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase tracking-widest font-mono"
                     />
-                    {fieldErrors.codigo_acceso && <p id="codigo_acceso-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.codigo_acceso}</p>}
+                    {fieldErrors.codigo_acceso && <p id="codigo_acceso-error" role="alert" className="text-xs text-red-600 dark:text-red-300 mt-1">{fieldErrors.codigo_acceso}</p>}
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
                   </div>
                 </div>
