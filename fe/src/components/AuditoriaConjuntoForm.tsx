@@ -254,7 +254,7 @@ export function AuditoriaConjuntoForm({
                   aria-checked={seleccionado}
                   onClick={() => setNivel(n)}
                   className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 px-2 py-4 text-sm font-semibold transition-all ${
-                    seleccionado ? claseSeleccionado : `border-transparent opacity-70 hover:opacity-100 ${claseBadge}`
+                    seleccionado ? claseSeleccionado : `border-transparent opacity-90 hover:opacity-100 ${claseBadge}`
                   }`}
                 >
                   {/* ¿Qué? Carita grande. Sin elegir se redibuja al pasar el mouse o enfocar (icon-draw);
