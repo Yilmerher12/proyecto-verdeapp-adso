@@ -432,12 +432,12 @@ export function AdminNovedadesPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-400/15 dark:text-purple-300">
+                          <span className="rounded-full aviso-categoria px-2.5 py-0.5 text-xs font-semibold">
                             {t(`novedades.alcances.${item.alcance}`)}
                           </span>
                           <span
                             title={item.conjuntos.map((c) => c.nombre_conjunto).join(", ") || undefined}
-                            className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300"
+                            className="rounded-full aviso-info px-2.5 py-0.5 text-xs font-semibold"
                           >
                             {etiquetaDestino(item)}
                           </span>
@@ -603,14 +603,14 @@ export function AdminNovedadesPage() {
             )}
 
             {!editando && (
-              <div className="space-y-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-400/30 dark:bg-indigo-400/10">
+              <div className="space-y-3 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4 dark:border-cyan-400/30 dark:bg-cyan-400/10">
                 <div className="flex items-center justify-between gap-2">
-                  <span id="novedad-conjunto-label" className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                  <span id="novedad-conjunto-label" className="text-xs font-bold text-cyan-900 dark:text-cyan-200">
                     {t("novedades.admin.conjunto.label")} <span className="text-red-500">*</span>{" "}
                     <span className="font-medium text-gray-500 dark:text-gray-400">— {t("novedades.admin.conjunto.question")}</span>
                   </span>
                   {form.modoConjunto === "elegir" && form.conjuntos.length > 0 && (
-                    <span className="shrink-0 text-[0.6875rem] font-bold text-indigo-700 dark:text-indigo-300">
+                    <span className="shrink-0 text-[0.6875rem] font-bold text-cyan-700 dark:text-cyan-300">
                       {t("novedades.admin.conjunto.count", { count: form.conjuntos.length })}
                     </span>
                   )}
@@ -626,8 +626,8 @@ export function AdminNovedadesPage() {
                       onClick={() => setForm({ ...form, modoConjunto: modo })}
                       className={`touch-target-h cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                         form.modoConjunto === modo
-                          ? "border-indigo-600 bg-indigo-100 text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200"
-                          : "border-gray-200 bg-white text-gray-500 hover:border-indigo-300 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
+                          ? "border-cyan-600 bg-cyan-100 text-cyan-900 dark:bg-cyan-400/15 dark:text-cyan-200"
+                          : "border-gray-200 bg-white text-gray-500 hover:border-cyan-300 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
                       }`}
                     >
                       {modo === "elegir" ? t("novedades.admin.conjunto.pick") : t("novedades.admin.conjunto.all")}

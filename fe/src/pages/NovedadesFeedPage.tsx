@@ -133,7 +133,7 @@ export function NovedadesFeedPage() {
                   {novedades.map((item) => (
                     <li key={item.id_novedad} className="px-5 py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-400/15 dark:text-purple-300">
+                        <span className="rounded-full aviso-categoria px-2.5 py-0.5 text-xs font-semibold">
                           {t(`novedades.alcances.${item.alcance}`)}
                         </span>
                         {item.editado && (

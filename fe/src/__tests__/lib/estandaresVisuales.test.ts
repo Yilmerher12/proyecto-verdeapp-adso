@@ -183,9 +183,10 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
         salida.push({ regla: "focoDelAnilloAMano", donde: dondeEsta(nodo) });
       }
 
-      // Regla 10 (issue #642): solo hay colores de acento (accent), de estado (red y amber) y de categoría (purple, indigo y teal); nada de
-      //           blue, yellow, orange, green, etc. (los de modo oscuro con prefijo dark: acompañan siempre a uno de claro).
-      const fuera = clase.match(/(?<![:\w-])(?:bg|text|border|ring|fill|stroke)-(?:blue|yellow|orange|green|emerald|sky|cyan|violet|pink|rose|lime)-\d+/);
+      // Regla 10 (issue #642, actualizada con la decisión 7 de la investigación de paleta): solo hay colores de acento (accent), de estado
+      //           (red y amber), de apoyo (cyan, el turquesa: información y cifras) y de categoría (violet); nada de blue, indigo, purple,
+      //           teal, yellow, orange, green, etc. (los de modo oscuro con prefijo dark: acompañan siempre a uno de claro).
+      const fuera = clase.match(/(?<![:\w-])(?:bg|text|border|ring|fill|stroke)-(?:blue|indigo|purple|teal|yellow|orange|green|emerald|sky|pink|rose|lime)-\d+/);
       if (fuera) salida.push({ regla: "coloresFueraDeLaLista", donde: `${dondeEsta(nodo)} ${fuera[0]}` });
 
       // Regla 13 (issue #644): el círculo "Cargando…" (LoadingState) ya no se usa para esperar datos de una pantalla; para eso está Esqueleto.

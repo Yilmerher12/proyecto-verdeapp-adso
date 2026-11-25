@@ -506,8 +506,8 @@ function FilaReciclador({
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-400/15">
-          <HardHat className="icon-lg text-teal-700 dark:text-teal-300" aria-hidden="true" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-100 dark:bg-cyan-400/15">
+          <HardHat className="icon-lg text-cyan-700 dark:text-cyan-300" aria-hidden="true" />
         </div>
         <div className="min-w-0">
           <p className="break-words text-sm font-semibold text-gray-900 dark:text-white">{nombre}</p>

@@ -332,8 +332,8 @@ describe("AdminConjuntoComunicadosPage", () => {
 
       await screen.findByText("Informativo.");
       const color = (texto: string) => screen.getByText(texto).closest("li")!.firstElementChild!;
-      expect(color("Informativo.")).toHaveClass("bg-blue-500");
-      expect(color("Convocatoria.")).toHaveClass("bg-purple-500");
+      expect(color("Informativo.")).toHaveClass("bg-cyan-600");
+      expect(color("Convocatoria.")).toHaveClass("bg-violet-600");
       expect(color("Mantenimiento.")).toHaveClass("bg-amber-500");
       expect(color("Reciclaje.")).toHaveClass("bg-accent-600");
     });

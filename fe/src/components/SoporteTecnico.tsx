@@ -55,7 +55,7 @@ const BARRA_PRIORIDAD: Record<PrioridadSoporte, string> = {
 
 const CLASE_ESTADO: Record<EstadoSoporte, string> = {
   NUEVA: "aviso-aviso",
-  EN_REVISION: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300",
+  EN_REVISION: "aviso-info",
   RESUELTA: "aviso-exito",
 };
 

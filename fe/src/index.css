@@ -712,6 +712,15 @@
 @utility aviso-info {
   @apply border border-cyan-700 bg-cyan-100 text-cyan-900 dark:border-cyan-400/60 dark:bg-cyan-400/[0.18] dark:text-cyan-200;
 }
+/* ¿Qué? `aviso-categoria` es el violeta de las etiquetas de CATEGORÍA (Convocatoria, alcance de una novedad,
+         "enviado manualmente"). No es un estado.
+   ¿Para qué? Decisión 7 de la investigación de paleta: el turquesa es el único color de apoyo (información,
+              cifras), pero un comunicado tiene 5 tipos y necesita 5 colores distinguibles. El violeta queda
+              limitado a categorías.
+   ¿Impacto? No se usa en botones ni en estados. */
+@utility aviso-categoria {
+  @apply border border-violet-600 bg-violet-100 text-violet-900 dark:border-violet-400/60 dark:bg-violet-400/[0.18] dark:text-violet-200;
+}
 
 /* ============================================================================
    Barra de progreso indeterminada (components/ui/ProgressBar.tsx)

@@ -34,11 +34,11 @@ export const NIVELES_DESEMPENO: Record<NivelDesempeno, NivelDesempenoConfig> = {
   BUENA: {
     icon: Smile,
     claseSeleccionado:
-      "border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-400/10 dark:text-teal-300 dark:border-teal-600",
-    claseBadge: "bg-teal-50 text-teal-700 dark:bg-teal-400/10 dark:text-teal-300",
-    claseRelleno: "fill-teal-700",
+      "border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300 dark:border-cyan-600",
+    claseBadge: "bg-cyan-50 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300",
+    claseRelleno: "fill-cyan-700",
     claseNumeroRelleno: "fill-white",
-    claseMuestra: "bg-teal-700",
+    claseMuestra: "bg-cyan-700",
   },
   REGULAR: {
     icon: Meh,

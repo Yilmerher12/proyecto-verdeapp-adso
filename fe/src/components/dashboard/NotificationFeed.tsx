@@ -38,21 +38,21 @@ import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
-  LLEGADA_RECICLADOR: { Icon: Truck, color: "text-teal-700 dark:text-teal-300" },
+  LLEGADA_RECICLADOR: { Icon: Truck, color: "text-cyan-700 dark:text-cyan-300" },
   SHUT_LLENO: { Icon: TriangleAlert, color: "text-amber-700 dark:text-amber-200" },
   SHUT_LIBRE: { Icon: PackageCheck, color: "text-accent-700 dark:text-accent-500" },
-  FINALIZACION_RECICLADOR: { Icon: DoorOpen, color: "text-indigo-700 dark:text-indigo-300" },
+  FINALIZACION_RECICLADOR: { Icon: DoorOpen, color: "text-cyan-700 dark:text-cyan-300" },
   // RQF-016 (desvinculación y reasignación de conjuntos)
   DESVINCULACION_APROBADA: { Icon: Unlink, color: "text-gray-600 dark:text-gray-400" },
   DESVINCULACION_RECHAZADA: { Icon: OctagonX, color: "text-red-600 dark:text-red-300" },
   CONJUNTO_ASIGNADO: { Icon: Building, color: "text-accent-700 dark:text-accent-500" },
   RECICLADOR_REVOCADO: { Icon: UserX, color: "text-red-600 dark:text-red-300" },
   // RQF-014 (comunicados del conjunto)
-  COMUNICADO_NUEVO: { Icon: Megaphone, color: "text-purple-700 dark:text-purple-300" },
-  COMUNICADO_ACTUALIZADO: { Icon: Megaphone, color: "text-purple-500 dark:text-purple-300" },
+  COMUNICADO_NUEVO: { Icon: Megaphone, color: "text-cyan-700 dark:text-cyan-300" },
+  COMUNICADO_ACTUALIZADO: { Icon: Megaphone, color: "text-cyan-600 dark:text-cyan-300" },
   // RQF-015 (novedades generales de la plataforma)
-  NOVEDAD_NUEVA: { Icon: Newspaper, color: "text-indigo-700 dark:text-indigo-300" },
-  NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-indigo-500 dark:text-indigo-300" },
+  NOVEDAD_NUEVA: { Icon: Newspaper, color: "text-cyan-700 dark:text-cyan-300" },
+  NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-cyan-600 dark:text-cyan-300" },
   // Soporte técnico: respuesta y cambio de estado de la consulta que el usuario envió
   RESPUESTA_SOPORTE: { Icon: MessageSquareReply, color: "text-accent-700 dark:text-accent-500" },
   ESTADO_SOPORTE: { Icon: LifeBuoy, color: "text-accent-700 dark:text-accent-500" },
@@ -60,7 +60,7 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   SOPORTE_NUEVO: { Icon: Headset, color: "text-amber-700 dark:text-amber-200" },
   DESVINCULACION_SOLICITADA: { Icon: Unlink, color: "text-amber-700 dark:text-amber-200" },
   // RQF-009 (resultado de la auditoría del reciclador)
-  AUDITORIA_PUBLICADA: { Icon: ClipboardCheck, color: "text-teal-700 dark:text-teal-300" },
+  AUDITORIA_PUBLICADA: { Icon: ClipboardCheck, color: "text-cyan-700 dark:text-cyan-300" },
   // RQF-013 (recomendación de contenido educativo según auditoría)
   CONTENIDO_RECOMENDADO: { Icon: GraduationCap, color: "text-amber-700 dark:text-amber-200" },
   // RQF-013, Flujo C (Admin del Sistema envía un módulo a mano, sin auditoría de por medio)

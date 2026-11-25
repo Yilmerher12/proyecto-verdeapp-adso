@@ -568,10 +568,10 @@ export function RecicladorDashboard() {
           {!cargando && conjuntoActivo && auditoriaPendienteActivo && (
             <section
               aria-labelledby="reciclador-auditoria-titulo"
-              className="rounded-2xl border border-teal-100 bg-teal-50/60 p-6 dark:border-teal-400/30 dark:bg-teal-400/10"
+              className="rounded-2xl border border-cyan-100 bg-cyan-50/60 p-6 dark:border-cyan-400/30 dark:bg-cyan-400/10"
             >
               <div className="flex items-center gap-2">
-                <ClipboardList className="icon-md text-teal-700 dark:text-teal-300" />
+                <ClipboardList className="icon-md text-cyan-700 dark:text-cyan-300" />
                 <h2 id="reciclador-auditoria-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
                   {t("dashboards.reciclador.auditoria.bannerTitle")}
                 </h2>
@@ -579,12 +579,11 @@ export function RecicladorDashboard() {
               <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
                 {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: conjuntoActivo.nombre_conjunto })}
               </p>
-              <button
-                onClick={() => setConjuntoParaAuditar(conjuntoActivo.id_conjunto_residencial)}
-                className="touch-target-h mt-3 w-full cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200 sm:w-auto"
-              >
-                {t("dashboards.reciclador.auditoria.bannerAction")}
-              </button>
+              <div className="mt-3 w-full sm:w-auto">
+                <Button fullWidth onClick={() => setConjuntoParaAuditar(conjuntoActivo.id_conjunto_residencial)}>
+                  {t("dashboards.reciclador.auditoria.bannerAction")}
+                </Button>
+              </div>
             </section>
           )}
           {!cargando && conjuntoActivo && !auditoriaPendienteActivo && ultimaAuditoriaActiva && (

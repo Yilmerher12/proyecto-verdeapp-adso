@@ -123,7 +123,7 @@ export function ModuloEducativoModal({ modulo, destinatarios, cargandoEnvios, on
                       {t(`dashboards.reciclador.auditoria.niveles.${d.nivel.toLowerCase()}`)}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-purple-700 dark:bg-purple-400/15 dark:text-purple-200">
+                    <span className="inline-flex items-center gap-1 rounded-full aviso-categoria px-2 py-0.5 text-[0.6875rem] font-semibold">
                       <Send className="icon-sm" />
                       {t(`${p}.modulePanel.sentManually`)}
                     </span>

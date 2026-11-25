@@ -599,7 +599,7 @@ export function AdminContenidoEducativoPage() {
                       </button>
                       <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         {nRecomendados > 0 && (
-                          <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
+                          <span className="rounded-full aviso-info px-2 py-0.5 text-[0.6875rem] font-semibold">
                             {t(`${p}.modules.recommendedTo`, { count: nRecomendados })}
                           </span>
                         )}

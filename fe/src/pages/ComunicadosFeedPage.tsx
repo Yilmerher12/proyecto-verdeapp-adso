@@ -15,9 +15,9 @@ import { TextoRecortable } from "@/components/ui/TextoRecortable";
 // ¿Qué? Mismo criterio de color que en el panel del Admin de Conjunto —
 //       Urgente en rojo para que salte a la vista de inmediato (CA-028.2).
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
-  INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300",
+  INFORMATIVO: "aviso-info",
   URGENTE: "aviso-error",
-  CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300",
+  CONVOCATORIA: "aviso-categoria",
   MANTENIMIENTO: "aviso-aviso",
   RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
 };

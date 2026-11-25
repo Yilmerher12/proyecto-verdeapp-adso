@@ -79,9 +79,9 @@ function resumirTexto(texto: string): string {
 // ¿Qué? Color por tipo — Urgente en rojo para que salte a la vista, igual
 //       que en el feed que ven residentes/recicladores.
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
-  INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300",
+  INFORMATIVO: "aviso-info",
   URGENTE: "aviso-error",
-  CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300",
+  CONVOCATORIA: "aviso-categoria",
   MANTENIMIENTO: "aviso-aviso",
   RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
 };
@@ -91,9 +91,9 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
 // ¿Para qué? Que el tipo se distinga de un vistazo sin leer, sobre todo "Urgente". Cuando el comunicado ya venció la
 //           franja se vuelve gris (ver más abajo): el color queda para lo que sigue vigente.
 const TIPO_FRANJA: Record<TipoComunicado, string> = {
-  INFORMATIVO: "bg-blue-500 dark:bg-blue-400",
+  INFORMATIVO: "bg-cyan-600 dark:bg-cyan-400",
   URGENTE: "bg-red-500 dark:bg-red-400",
-  CONVOCATORIA: "bg-purple-500 dark:bg-purple-400",
+  CONVOCATORIA: "bg-violet-600 dark:bg-violet-400",
   MANTENIMIENTO: "bg-amber-500 dark:bg-amber-400",
   RECICLAJE: "bg-accent-600 dark:bg-accent-400",
 };
