@@ -28,7 +28,7 @@ Lo más importante a tener en cuenta: los PR se integraron después del cierre d
 - **Archivos que tocó:**
   - Backend: `be/app/tests/test_puntos_acopio.py`.
 - **Dificultades:** el CI del frontend fallaba en todos los PR por la alerta de `pnpm audit` de `picomatch`; se resolvió en `develop` con el PR #677.
-- **Cómo se sintió:** no reportado.
+- **Cómo se sintió:** según su propio comentario: «Semana 04: muy bien, se comprendió a qué unidad estaba enfocada los tests (API), las partes de como se organizaba un test (AAA), diferencias sobre la semana 03 y 02 (componentes y pruebas unitarias) y me desenvolví de una gran manera al entender los retos del profe, al aplicarlos en el código del proyecto y al probarlos.»
 - **Revisión e integración:** lo revisó Yordan (capa E2E) y se integró el 20/11/2026. El issue #654 se cerró sin comentario de cierre.
 
 ### Yordan Castro Guerrero (@yordancastrog7-pixel)
@@ -51,7 +51,7 @@ Lo más importante a tener en cuenta: los PR se integraron después del cierre d
   - La rama del #658 estaba 51 commits atrás de `develop`; al actualizarla, la base de pruebas pasó a un contenedor propio y hubo que agregar `TEST_DATABASE_URL` a `be/.env`.
   - Yilmer pidió cambios en el #658 el 17/11 (el caso autorizado y el 500 en JSON); se atendieron el 24/11.
   - Asumió una tarjeta que no era suya (#657), lo que le dio más carga esta semana.
-- **Cómo se sintió:** por completar.
+- **Cómo se sintió:** carga de trabajo alta: asumió la tarjeta #657 además de la propia, y atender los cambios pedidos en el #658 implicó actualizar la rama (estaba 51 commits atrás de `develop`) y la configuración de las pruebas. Además de escribir las pruebas, como Scrum Master le tocó coordinar las revisiones cruzadas.
 - **Revisión e integración:** el #658 lo revisó Yilmer (capa API). El #695 lo revisó el propio Scrum Master por acuerdo del equipo para ahorrar tiempo, así que no fue una revisión independiente; se integró el 24/11/2026.
 
 ### Juan Carlos Barajas (@Juanbarajas90)
