@@ -114,6 +114,25 @@ def test_should_respond_403_when_the_role_is_not_allowed(client: TestClient, req
     assert "detail" in respuesta.json()
 
 
+def test_should_respond_200_with_json_when_the_role_is_allowed(client: TestClient, admin_sistema_auth_headers):
+    # Arrange: el Administrador del Sistema, el único rol que puede entrar a esta ruta.
+    # ¿Qué? Es el caso "autorizado" que completa el trío 401, 403 y 200: las pruebas de arriba
+    #       solo comprueban que se rechace a quien no debe entrar; esta comprueba que quien sí
+    #       debe entrar, entra.
+    # ¿Impacto? Si la verificación de rol se rompe y bloquea a todos, las de 403 seguirían en
+    #           verde y solo esta avisaría.
+
+    # Act: la misma ruta a la que la prueba anterior le niega el paso a un Residente.
+    respuesta = client.get("/api/v1/admin/vista-residentes", headers=admin_sistema_auth_headers)
+
+    # Assert: 200, en JSON, con la forma que lee el frontend: la lista y el total.
+    assert respuesta.status_code == 200
+    assert respuesta.headers["content-type"].startswith("application/json")
+    cuerpo = respuesta.json()
+    assert isinstance(cuerpo["items"], list)
+    assert isinstance(cuerpo["total"], int)
+
+
 def test_should_respond_422_with_json_and_no_internal_details_when_the_body_is_malformed(client: TestClient):
     # Arrange: un JSON cortado a la mitad.
     cuerpo_malformado = '{"email": "a@a.com", "password": '
