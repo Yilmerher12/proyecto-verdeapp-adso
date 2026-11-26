@@ -12,6 +12,8 @@ Pruebas de la carga del contenido educativo desde el seed (issue #519).
 """
 
 import json
+import re
+from urllib.parse import unquote
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -79,6 +81,47 @@ class TestArchivoDeContenido:
         #           archivo terminan con un párrafo "Fuente: ...".
         sin_fuente = [m["titulo_tema"] for m in _archivo() if "\n\nFuente: " not in m["cuerpo_texto"]]
         assert sin_fuente == []
+
+    def test_los_enlaces_internos_apuntan_a_categorias_que_existen(self):
+        # ¿Qué? Un enlace como [texto](/catalogo-educativo/Nombre%20de%20la%20categoría) lleva a esa categoría.
+        # ¿Impacto? Si se renombra una categoría y un módulo sigue apuntando al nombre viejo, el Residente
+        #           llegaría a una lista vacía. Los enlaces a una lección puntual no se permiten: su id
+        #           cambia en cada base de datos y el enlace no sirviría para todos.
+        prefijo = "/catalogo-educativo/"
+        malos = []
+        for modulo in _archivo():
+            for destino in re.findall(r"\]\((/[^)\s]*)\)", modulo["cuerpo_texto"]):
+                categoria = unquote(destino.removeprefix(prefijo)) if destino.startswith(prefijo) else None
+                if categoria not in CATEGORIAS:
+                    malos.append((modulo["titulo_tema"], destino))
+        assert malos == []
+
+    def test_dos_modulos_de_una_categoria_no_repiten_la_misma_estructura(self):
+        # ¿Qué? La secuencia de títulos de sección ("**Título**" al inicio de un párrafo) de cada módulo.
+        # ¿Impacto? Issue #707: los módulos de una categoría rotan sus secciones según su tema. Si dos
+        #           tienen exactamente los mismos títulos en el mismo orden, se leen como copia de plantilla.
+        vistas: dict[tuple, str] = {}
+        repetidas = []
+        for modulo in _archivo():
+            titulos = tuple(re.findall(r"(?m)^\*\*([^*\n]+)\*\*\s*$", modulo["cuerpo_texto"]))
+            clave = (modulo["modulo_categoria"], titulos)
+            if clave in vistas:
+                repetidas.append((vistas[clave], modulo["titulo_tema"]))
+            vistas[clave] = modulo["titulo_tema"]
+        assert repetidas == []
+
+    def test_la_introduccion_no_se_confunde_con_un_titulo(self):
+        # ¿Qué? "Hay casos que engañan: parecen..." se mostraría como una sección titulada «Hay casos que
+        #       engañan» y la lección quedaría sin introducción. Es la misma regla de la etiqueta corta de
+        #       fe/src/lib/muroLeccion.ts: hasta 40 caracteres sin punto ni signos antes de los dos puntos.
+        # ¿Impacto? El primer párrafo de cada módulo no debe empezar en negrita, con # ni con esa etiqueta.
+        etiqueta_corta = re.compile(r"^([^.:?!\n]{3,40}):\s+\S")
+        malos = []
+        for modulo in _archivo():
+            primero = modulo["cuerpo_texto"].split("\n\n")[0].strip()
+            if primero.startswith(("**", "#", "![")) or etiqueta_corta.match(primero):
+                malos.append(modulo["titulo_tema"])
+        assert malos == []
 
 
 class TestImportarContenidoEducativo:
