@@ -54,7 +54,7 @@ La acción no es un campo: la define el método HTTP (`POST` crea, `PUT /{id_con
 
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Módulo creado       | 201         | El módulo creado: `id_contenido`, `modulo_categoria`, `titulo_tema`, `cuerpo_texto`, `url_video`, `url_guia`, `url_imagen`, `fecha_publicacion` |
+| Módulo creado       | 201         | El módulo creado: `id_contenido`, `modulo_categoria`, `titulo_tema`, `cuerpo_texto`, `url_video`, `url_guia`, `url_imagen`, `fecha_publicacion`, `orden` (la asigna el servidor: un módulo nuevo, o uno que cambia de categoría, queda al final de su categoría; no se envía al crear ni al editar) |
 | Módulo editado      | 200         | El módulo actualizado, con los mismos campos                                                                 |
 | Módulo eliminado    | 204         | Sin cuerpo                                                                                                   |
 | Otro rol            | 403         | `{"detail": "Solo un Administrador del Sistema puede gestionar el contenido educativo."}`                   |

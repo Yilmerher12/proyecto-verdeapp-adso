@@ -140,6 +140,7 @@ erDiagram
         VARCHAR titulo_tema
         TEXT cuerpo_texto
         DATE fecha_publicacion
+        INTEGER orden
         VARCHAR url_video
         VARCHAR url_guia
         VARCHAR url_imagen
@@ -624,11 +625,12 @@ Comentarios internos del Admin Sistema sobre un punto de acopio (RQF-011): notas
 | titulo_tema       | VARCHAR |
 | cuerpo_texto      | TEXT    |
 | fecha_publicacion | DATE    |
+| orden             | INTEGER |
 | url_video         | VARCHAR |
 | url_guia          | VARCHAR |
 | url_imagen        | VARCHAR |
 
-`cuerpo_texto` admite Markdown, renderizado en el frontend. `url_guia` puede ser un archivo subido (PDF/imagen) o un link externo. `url_imagen` es la portada opcional del módulo y solo puede ser una imagen subida a VerdeApp (`/uploads/adjuntos/...`); las imágenes escritas dentro de `cuerpo_texto` siguen la misma regla.
+`orden` es la posición del módulo dentro de su categoría (1 es el primero que se lee); el servicio le pone el siguiente número al crearlo, así que queda al final. `cuerpo_texto` admite Markdown, renderizado en el frontend. `url_guia` puede ser un archivo subido (PDF/imagen) o un link externo. `url_imagen` es la portada opcional del módulo y solo puede ser una imagen subida a VerdeApp (`/uploads/adjuntos/...`); las imágenes escritas dentro de `cuerpo_texto` siguen la misma regla.
 
 ---
 

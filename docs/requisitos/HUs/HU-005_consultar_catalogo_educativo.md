@@ -41,7 +41,9 @@
 
 - **Dado que** estoy viendo la lista de módulos,
 - **cuando** selecciono uno,
-- **entonces** debo ver cada lección como un muro: su video, "De qué trata" y una tarjeta corta por cada párrafo del texto. Si el módulo tiene imágenes subidas por el Administrador, se ven dentro de su tarjeta; una imagen que no sea de VerdeApp nunca se muestra.
+- **entonces** debo ver la lista de lecciones de esa categoría, en su orden de lectura, con su número o su marca de visto, su título, una línea de resumen y, si lo tiene, «Con video». Arriba veo la cabecera de la categoría (frase, «N lecciones · M vistas», la barra de avance y el botón «Empezar» o «Continuar», o «Categoría completa»). Entrar a la categoría no marca nada como visto (issue #705).
+
+**Y al abrir una lección** veo su propia página, con la ruta arriba (en celular solo «‹ categoría»), la lección como una sola tarjeta (título, video, introducción, secciones con su lista, el botón de la guía oficial y la fuente al pie) y «Anterior / Siguiente» dentro de su categoría. Solo esa lección se marca como vista. Si el módulo tiene imágenes subidas por el Administrador, se ven dentro de su sección; una imagen que no sea de VerdeApp nunca se muestra. Si la lección ya no existe, se avisa con un botón al catálogo.
 
 ### CA-005.3 — Solo lectura
 

@@ -61,7 +61,7 @@
 
 - **Dado que** estoy escribiendo un módulo,
 - **cuando** miro la vista previa en vivo,
-- **entonces** debo ver la lección con el mismo muro que verá el Residente, sobre el fondo gris que ve el Residente, en dos pestañas: "Lección" ("De qué trata" y una tarjeta por párrafo) y "Tarjeta del catálogo" (donde se ve la portada). La vista previa se queda fija mientras recorro el formulario y, en celular, se alterna con el formulario mediante "Editar | Vista previa". Debajo del campo de contenido veo una línea de ayuda, el botón "Tarjeta" (agrega un párrafo con "Título de la tarjeta: " ya seleccionado) y un recuadro en vivo "Así se dividirá tu texto en el muro" con la introducción, cada tarjeta con su título y el cierre (issue #620).
+- **entonces** debo ver la lección con la misma tarjeta única que verá el Residente (título, video, introducción, secciones, guía y fuente), sobre el fondo gris que ve el Residente, en dos pestañas: "Lección" y "Fila de la lista" (cómo aparece en la lista de lecciones de su categoría; issue #705). La vista previa se queda fija mientras recorro el formulario y, en celular, se alterna con el formulario mediante "Editar | Vista previa". Debajo del campo de contenido veo una línea de ayuda, el botón "Tarjeta" (agrega un párrafo con "Título de la tarjeta: " ya seleccionado) y un recuadro en vivo "Así se dividirá tu texto en el muro" con la introducción, cada tarjeta con su título y el cierre (issue #620).
 
 ### CA-012.7 — Categoría existente o nueva
 
