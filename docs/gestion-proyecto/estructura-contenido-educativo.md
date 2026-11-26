@@ -96,12 +96,12 @@ Para que el texto corregido del seed llegue a una base que ya estaba sembrada ha
 - **Cómo se entrega un escombro en cantidad pequeña:** la ruta oficial es el Ecopunto, la recolección a domicilio o un gestor autorizado. Que el reciclador lo reciba o lo gestione **no tiene fuente**, y el Decreto 1381 excluye los escombros de lo que corresponde a las organizaciones de recicladores. La app no debería decir "entrégaselo al reciclador" sin validarlo.
 - **Jeringas y cortopunzantes:** los puntos rojos de la Subred Sur salen de una búsqueda, no de una página leída completa. Hay que verificarlos antes de redactar.
 - **En qué recipiente se entregan los escombros:** no se encontró fuente.
-- **Enlaces entre módulos:** hoy un módulo solo tiene un video y una guía; el texto no admite enlaces a otra categoría. Por ahora se escribe como texto ("ver la categoría Separación por colores de bolsa"). Que el texto admita enlaces sería una tarjeta aparte.
+- **Enlaces entre módulos:** cuando se escribió esta sección el texto no admitía enlaces. **Resuelto** en el issue #705 (el texto acepta enlaces) y usado en el issue #707 (ver 7.2).
 - **Bicicletas, sillines y canecas:** fuera de esta propuesta (ver sección 2).
 
 ## 7.1 Entrega del issue #519
 
-El catálogo pasó de 6 a **28 módulos** en las 8 categorías. Cada texto cita su fuente oficial, está redactado en un estilo corto (apertura, 3 o 4 tarjetas con listas) y vive en `be/app/data/contenido_educativo.json`. En cada categoría el catálogo los muestra en orden de aprendizaje.
+El catálogo pasó de 6 a **28 módulos** en las 8 categorías (el issue #707 lo llevó después a 33 y amplió cada texto; ver 7.2). Cada texto cita su fuente oficial, estaba redactado en un estilo corto (apertura, 3 o 4 tarjetas con listas) y vive en `be/app/data/contenido_educativo.json`. En cada categoría el catálogo los muestra en orden de aprendizaje.
 
 Los 6 módulos originales **ya no existen tal cual**: se revisaron contra los nuevos y se reescribieron, se fusionaron o se eliminaron, para no dejar módulos que repitan lo mismo.
 
@@ -134,14 +134,51 @@ Los 6 módulos originales **ya no existen tal cual**: se revisaron contra los nu
 - "Papel y plástico", "Vidrio, metal y latas" y "Línea blanca" de la propuesta quedaron como "Papel y cartón", "Plástico", "Vidrio y latas" y dentro de "Aparatos eléctricos y línea blanca".
 - Casi todos los módulos de separación y preparación se apoyan en la Guía Nacional para la adecuada separación de residuos sólidos (2022), que se leyó después de la investigación #569.
 
-**Pendiente para otra tarjeta** (propuesto en la revisión de esta entrega): módulos de reducción y compost, "¿Para qué sirve reciclar?" con datos de la Guía Nacional, ropa y zapatos usados, un mapa de "qué va a dónde" para peligrosos, qué hace la Línea 110 con muebles y escombros, y una tarjeta "¿Por qué importa?" en cada módulo.
+**Pendiente para otra tarjeta** (propuesto en la revisión de esta entrega): módulos de reducción y compost, "¿Para qué sirve reciclar?" con datos de la Guía Nacional, ropa y zapatos usados, un mapa de "qué va a dónde" para peligrosos, qué hace la Línea 110 con muebles y escombros, y una tarjeta "¿Por qué importa?" en cada módulo. **Hecho en el issue #707** (ver 7.2), salvo la tarjeta fija "¿Por qué importa?": cada módulo trae su propia sección sobre el porqué cuando el tema lo pide.
 
 **Límites de la entrega:**
 
 - "Jeringas y agujas" es un módulo corto: las fuentes oficiales leídas no dan un punto de entrega concreto para los hogares. "Envases de insecticida" se apoya en la Resolución 1675 de 2013 y en el plegable del Ministerio de Ambiente (2014); la Guía Nacional no trae una sección de plaguicidas.
 - Los 3 videos son de "Marce La Recicladora" (apoyo, no fuente). Solo se confirmó que existen y su título; falta que una persona los vea completos.
-- Partes del Decreto 1381 de 2024 y del artículo 25 de la Resolución 799 de 2025 se leyeron por resumen automático; el texto sobre pilas del plegable del Ministerio de Ambiente es de 2014.
+- Partes del Decreto 1381 de 2024 y del artículo 25 de la Resolución 799 de 2025 se leyeron por resumen automático; el texto sobre pilas del plegable del Ministerio de Ambiente es de 2014. En el issue #707 se leyeron de nuevo los artículos citados de ambas normas, tal como están en el Gestor Normativo de la CRA.
 - El seed no borra ni actualiza módulos en una base ya sembrada: quien tenga los 6 originales debe reiniciar el volumen de Docker para recibir los 28 actuales.
+
+## 7.2 Entrega del issue #707
+
+El catálogo pasó de 28 a **33 módulos**, y los 27 que ya existían (todos menos Pilas, que fue el piloto) se reescribieron con mucha más profundidad: de 110 a 200 palabras pasaron a unas 240 a 470. Siguen en `be/app/data/contenido_educativo.json`.
+
+**Cómo se escribió cada módulo**
+
+- **Secciones distintas según el tema.** No hay una plantilla. Un módulo de peligrosos habla de qué entra y qué no, de pasos y de qué hacer si falla algo; uno de separación explica reglas y casos; uno de normas cuenta quién hace qué. La prueba `test_dos_modulos_de_una_categoria_no_repiten_la_misma_estructura` solo impide que dos módulos de una categoría tengan exactamente los mismos títulos de sección en el mismo orden.
+- **Enlaces entre módulos.** Cada módulo manda a otras categorías con enlaces como `[Residuos peligrosos del hogar](/catalogo-educativo/Residuos%20peligrosos%20del%20hogar)`. Se enlaza a la categoría y no a una lección, porque el id de una lección cambia en cada base de datos. La prueba `test_los_enlaces_internos_apuntan_a_categorias_que_existen` revisa que cada enlace apunte a una de las 8 categorías.
+- **Primer párrafo sin título.** La pantalla toma como título cualquier frase de hasta 40 caracteres sin punto antes de dos puntos ("Hay casos que engañan: ..."), y entonces la lección se queda sin introducción. La prueba `test_la_introduccion_no_se_confunde_con_un_titulo` lo vigila.
+- **Cada afirmación lleva fuente,** y lo que las fuentes no dicen se escribe como tal: por ejemplo, que no hay una lista de puntos de acopio para bolsas plásticas o que no hay una guía de compostaje paso a paso.
+- **Sin cifras de puntos que cambian** (como cuántos puntos tiene un programa). Las cifras que quedan llevan su fecha.
+
+**Los 5 módulos nuevos**
+
+| Categoría | Módulo nuevo | Posición |
+|---|---|---|
+| Separación en la fuente | ¿Para qué sirve separar la basura? | 1 |
+| Separación en la fuente | Orgánicos sin ruta de recolección: ¿qué opciones tengo? | 6 |
+| Puntos limpios y Ecopuntos | Ropa y zapatos que ya no usas: ¿dónde los entrego? | 3 |
+| Residuos de construcción y demolición | Línea 110: ¿cómo pido que recojan muebles o escombros? | 3 |
+| Residuos peligrosos del hogar | El mapa de qué va a dónde | 1 |
+
+Al agregarlos, el campo `orden` de los demás módulos de esas categorías se corrió una posición. Quedan 8 módulos en Separación, 7 en peligrosos, 4 en Preparación, 3 en Aparatos, 3 en Ecopuntos, 3 en Economía circular, 3 en construcción y demolición y 2 en consumo responsable.
+
+**Datos que cambiaron frente a la entrega anterior**
+
+- **Línea 110 tiene costo.** Las notas de la UAESP en el Portal Bogotá (2021 y 2024) dicen que el cobro se concierta con el operador de aseo y se paga directo o en la factura. Otras publicaciones llaman gratuito al servicio, así que el módulo dice que se confirme el costo al llamar. El Ecopunto sí es gratis.
+- **Ecoleta.** La guía de posconsumo de la Secretaría de Ambiente (abril de 2026) escribe «Ecoleta»; los 10 mandamientos y la investigación #569 escriben «Ecolecta». Los módulos usan «Ecoleta».
+- **Bolsa verde y restos de carne.** El módulo anterior decía «carne y huesos». La UAESP cuenta las carnes como orgánicos y la Guía Nacional manda lo cocinado a la bolsa negra si no hay ruta con tratamiento. El módulo explica esa diferencia y ya no menciona los huesos, porque ninguna fuente los nombra.
+- **Cobro al reciclador.** El Decreto 1381 solo dice que el aprovechamiento se cobra a todos los usuarios del aseo y que la tarifa remunera esa actividad. Los módulos ya no dicen que el cobro «llega a su organización».
+
+**Pendiente**
+
+- Falta que una persona vea los 3 videos de Marce La Recicladora.
+- Las imágenes propias de cada módulo (generadas con IA, revisadas una por una) son el issue #706.
+- El seed solo inserta: quien ya tenía su base sembrada debe reiniciar el volumen de Docker para recibir los 33 módulos con sus textos nuevos.
 
 ## 8. Preguntas para el grupo
 
