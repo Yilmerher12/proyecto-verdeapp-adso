@@ -56,7 +56,7 @@ La parte difícil no es dibujar la lista, es **abrir un módulo ya escrito y par
 Cómo se reduciría el riesgo:
 
 - Un módulo viejo se abre primero en el **modo texto de hoy**, y la vista de tarjetas solo se ofrece si partir y volver a juntar da el mismo texto.
-- Una prueba automática que tome los 6 módulos de `seed.py` y los de `seed_demo.py`, los parta, los junte y compare el resultado con el original.
+- Una prueba automática que tome los módulos de `be/app/data/contenido_educativo.json` y los de `seed_demo.py`, los parta, los junte y compare el resultado con el original.
 - No tocar los módulos ya publicados hasta que la prueba pase con todos.
 
 ## 5. Qué lo haría necesario

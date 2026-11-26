@@ -455,7 +455,7 @@ verde-app/
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
 │   ├── app/                 # Código fuente principal de la API
-│   │   ├── data/            # CSV de conjuntos residenciales reales y de las 799 ECA de la UAESP (lo usa seed.py)
+│   │   ├── data/            # CSV de conjuntos residenciales reales y de las 799 ECA de la UAESP, y el JSON de los módulos educativos (lo usa seed.py)
 │   │   ├── models/          # Entidades e imperativos relacionales de SQLAlchemy
 │   │   ├── routers/         # Controladores de endpoints divididos por recursos
 │   │   ├── schemas/         # Modelos de validación estricta de Pydantic (DTOs)
@@ -463,7 +463,7 @@ verde-app/
 │   │   ├── tests/           # Entorno de pruebas automatizadas (pytest)
 │   │   ├── uploads/         # Imágenes subidas por los usuarios, servidas en /uploads
 │   │   ├── utils/           # Helpers de infraestructura (seguridad, correo, imágenes, logs)
-│   │   ├── seed.py          # Siembra roles, localidades, cuentas de prueba, conjuntos reales y ECA de la UAESP
+│   │   ├── seed.py          # Siembra roles, localidades, cuentas de prueba, conjuntos reales, ECA de la UAESP y módulos educativos
 │   │   ├── database.py      # Configuración de la sesión y conexión con la BD
 │   │   ├── dependencies.py  # Inyección de dependencias (Autenticación, Sesión DB)
 │   │   └── main.py          # Punto de entrada y configuración central de FastAPI

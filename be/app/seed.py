@@ -18,6 +18,7 @@ contra una base con datos reales).
 """
 
 import csv
+import json
 from pathlib import Path
 
 from sqlalchemy import text
@@ -30,6 +31,8 @@ from app.utils.ids import generar_uuid4
 SEED_FILE = Path(__file__).parent / "seed_data.sql"
 CONJUNTOS_CSV = Path(__file__).parent / "data" / "conjuntos_residenciales_bogota.csv"
 ECA_CSV = Path(__file__).parent / "data" / "eca_inventario_uaesp.csv"
+# ¿Qué? Los módulos del catálogo educativo, con su fuente citada en cada texto (issue #519).
+CONTENIDO_EDUCATIVO_JSON = Path(__file__).parent / "data" / "contenido_educativo.json"
 # ¿Qué? Correos de contacto de las organizaciones, en un archivo aparte que NO se sube al repositorio
 #       (está en .gitignore, como el .env). Si no existe, el directorio funciona igual, sin correos.
 # ¿Para qué? El repositorio es público y algunos correos son direcciones personales (Gmail, Yahoo).
@@ -330,17 +333,18 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
 
 def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
     """
-    ¿Qué? Siembra el superadministrador y los 6 módulos de contenido
-          educativo — datos que antes vivían como INSERT estáticos en
-          seed_data.sql. Los puntos de acopio ya no se siembran aquí: vienen
-          del inventario de la UAESP (importar_eca_inventario, issue #664).
-    ¿Para qué? Sus llaves primarias ahora son UUID (generar_uuid4, ver
+    ¿Qué? Siembra el superadministrador — dato que antes vivía como INSERT
+          estático en seed_data.sql. Los puntos de acopio ya no se siembran
+          aquí: vienen del inventario de la UAESP (importar_eca_inventario,
+          issue #664). El contenido educativo tampoco: vive en
+          importar_contenido_educativo (issue #519).
+    ¿Para qué? Su llave primaria ahora es UUID (generar_uuid4, ver
               app/utils/ids.py) — un INSERT de SQL puro y estático ya no
-              puede generarlas, así que se movieron aquí junto con
+              puede generarla, así que se movió aquí junto con
               conjuntos_residenciales y los usuarios de prueba, que ya
               tenían este mismo tratamiento.
-    ¿Impacto? Mismos datos exactos que antes, solo cambia dónde se generan
-              sus IDs.
+    ¿Impacto? Mismos datos exactos que antes, solo cambia dónde se genera
+              su ID.
     """
     # ¿Qué? Superadministrador oficial compartido para el equipo de desarrollo.
     # Contraseña hasheada: AdminVerde2026*
@@ -353,78 +357,40 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
         ),
         {"id_usuario": generar_uuid4()},
     )
+    print("[seed] Superadmin sembrado.")
 
-    contenido_educativo = [
-        (
-            "Separación en la fuente y código de colores",
-            "Código de colores para la separación en la fuente",
-            "En Bogotá la separación de residuos en la fuente se hace con tres colores de bolsa, unificados a nivel nacional por el Ministerio de Ambiente y Desarrollo Sostenible y aplicados en la ciudad por la UAESP.\n\nBolsa blanca: material aprovechable, limpio y seco. Aquí van el papel, el cartón, el plástico, el vidrio, el metal y las latas de aluminio.\n\nBolsa negra: residuos ordinarios que ya no se pueden aprovechar, como residuos de comida muy contaminados, papel higiénico, pañales, servilletas usadas y barrido de la casa.\n\nBolsa verde: residuos orgánicos aprovechables, como cáscaras, restos de comida, semillas y huesos.\n\nLa regla de oro es simple: si el material está limpio y seco, casi siempre es aprovechable y va en la bolsa blanca. Si está mojado, sucio o mezclado con comida, ya no sirve para reciclar. Separar bien en el hogar es el primer paso de toda la cadena de reciclaje: si las bolsas llegan mezcladas, el reciclador de oficio tiene que volver a separar el material a mano, perdiendo tiempo y calidad en el proceso.",
-            "2026-08-15",
-            "https://www.youtube.com/watch?v=Jxzw1xyxE2s",
-            "https://bogota.gov.co/mi-ciudad/habitat/asi-puedes-separar-residuos-segun-el-color-de-las-bolsas-en-bogota",
-        ),
-        (
-            "Tipos de residuos y su preparación",
-            "Cómo preparar cada material antes de entregarlo para reciclaje",
-            "No basta con poner el material en la bolsa correcta: cómo se prepara cada residuo también afecta si de verdad se puede aprovechar.\n\nPapel y cartón: deben estar secos y sin residuos de comida o grasa (por ejemplo, una caja de pizza grasosa no sirve). Es buena práctica aplanar las cajas para que ocupen menos espacio.\n\nPlástico: enjuagar brevemente los envases para quitar restos de líquido o comida, y aplanar las botellas. No es necesario quitar las etiquetas.\n\nVidrio: enjuagar los frascos y envases. Hay que manejarlo con cuidado para evitar que se rompa y se vuelva un riesgo para quien recoge el material.\n\nMetal y latas: enjuagar y, si es posible, aplastar las latas para ahorrar espacio en la bolsa.\n\nUn residuo mal preparado (sucio, mojado o mezclado con orgánicos) puede contaminar todo el contenido de la bolsa blanca y hacer que el material que sí estaba bien separado termine descartado como basura ordinaria.",
-            "2026-08-16",
-            "https://youtu.be/gYOwmj3-XqQ",
-            "https://bogota.gov.co/mi-ciudad/ambiente/como-hacer-separacion-de-residuos-y-reciclar-desde-casa",
-        ),
-        (
-            "Puntos limpios y Ecopuntos",
-            "Ecopuntos: qué son y cómo usarlos para muebles, colchones y escombros",
-            "Los Ecopuntos son cajas que dispone la UAESP en distintos puntos de la ciudad, para que los residentes entreguen de manera gratuita elementos voluminosos que NO caben en la recolección normal de basuras. Cada zona se atiende aproximadamente cada cuatro semanas.\n\nQué se puede llevar: muebles viejos, colchones, tejas y escombros o material de obra en pequeñas cantidades.\n\nQué NO se puede llevar: llantas ni electrodomésticos — estos tienen puntos de recolección aparte, especializados en residuos eléctricos y electrónicos (RAEE).\n\nUsar los Ecopuntos evita que estos elementos terminen abandonados en andenes, parques o rondas de quebradas, que es uno de los problemas más visibles de la gestión de residuos en la ciudad. La programación semanal se consulta cada domingo en uaesp.gov.co/ecopuntos, así que conviene revisarla antes de sacar el material.",
-            "2026-08-17",
-            "https://youtu.be/9X2m2E6OEgc",
-            "https://bogota.gov.co/mi-ciudad/habitat/como-funcionan-los-ecopunto-en-bogota-y-para-que-sirven",
-        ),
-        (
-            "Economía circular y aprovechamiento",
-            "Economía circular en Bogotá: el papel del reciclador de oficio",
-            "La economía circular busca que un material se mantenga en uso el mayor tiempo posible, en lugar de terminar en un relleno sanitario después de un solo uso. En Bogotá, esa cadena depende directamente del trabajo del reciclador de oficio.\n\nLos recicladores de oficio son quienes recogen, transportan y comercializan el material aprovechable que los hogares separan. El aprovechamiento es una actividad complementaria del servicio público de aseo, y el Decreto Nacional 1381 de 2024 reconoce en exclusividad, por 15 años, a las organizaciones de recicladores de oficio la recuperación de los residuos aprovechables — no es informalidad, es parte formal del sistema de aseo de la ciudad.\n\nBogotá cuenta con miles de recicladores de oficio organizados, y buena parte del material aprovechable de la ciudad se recupera gracias a su trabajo directo con los hogares. Por eso VerdeApp conecta a cada conjunto residencial con un reciclador autorizado: entregarle el material limpio y bien separado, en el horario acordado, es la forma más directa de que ese material sí vuelva a la economía en lugar de convertirse en basura.",
-            "2026-08-18",
-            "https://youtu.be/QoJdWPcZQS8",
-            "https://www.uaesp.gov.co/aprovechamiento-residuos-solidos-bogota",
-        ),
-        (
-            "Residuos de construcción y demolición",
-            "Manejo adecuado de escombros y residuos de construcción (RCD)",
-            "Los Residuos de Construcción y Demolición (RCD) son el material que sobra de obras, remodelaciones o reparaciones dentro del conjunto: escombros, restos de baldosa, cemento, ladrillo, tejas rotas, entre otros.\n\nEstos residuos NO se deben mezclar con las bolsas blanca, negra o verde de la recolección domiciliaria normal, ni acumularse en zonas comunes, andenes o antejardines — además del riesgo de accidentes, es una infracción que puede generar comparendos ambientales.\n\nPara volúmenes pequeños, la ciudad dispone de los Ecopuntos (ver el módulo correspondiente). Para volúmenes más grandes, propios de una obra, se debe contratar a un gestor autorizado de RCD, que se encarga de transportarlos hasta una escombrera legal.\n\nComo Administrador de Conjunto, vale la pena informar a los residentes con anticipación cuando se planee una obra o remodelación, para coordinar dónde y cómo se va a disponer el material sobrante antes de que se convierta en un problema para todo el conjunto.",
-            "2026-08-19",
-            "https://youtu.be/ZXaiQaUQp24",
-            "https://bogota.gov.co/mi-ciudad/movilidad/gestion-residuos-de-construccion-y-demolicion-del-idu-en-bogota-2026",
-        ),
-        (
-            "Marco distrital y consumo responsable",
-            "Consumo responsable: reducir antes de reciclar",
-            "Reciclar bien es importante, pero el primer paso de una buena gestión de residuos es generar menos basura desde el principio. Bogotá produce miles de toneladas de residuos cada día, y solo una parte relativamente pequeña se recupera — reducir el consumo innecesario tiene tanto impacto como separar correctamente.\n\nAlgunas prácticas de consumo responsable que promueve la Alcaldía de Bogotá:\n\nReducir antes que reciclar: preferir productos con menos empaque, evitar los desechables de un solo uso y comprar solo lo necesario.\n\nReutilizar lo que ya se tiene: usar termos y botellas recargables en lugar de comprar agua embotellada, dar una segunda vida a envases y recipientes antes de descartarlos.\n\nConocer al reciclador del sector: entregarle directamente el material aprovechable, en el día y horario en que pasa, es más eficiente que dejarlo mezclado con la basura ordinaria.\n\nEstos hábitos, multiplicados por todos los hogares de un conjunto residencial, hacen una diferencia real en cuánto material termina en un relleno sanitario en lugar de volver a ser útil.",
-            "2026-08-19",
-            "https://youtu.be/uyoFR5m7_3E",
-            "https://bogota.gov.co/mi-ciudad/ambiente/10-mandamientos-para-una-bogota-con-cero-desechos",
-        ),
-    ]
-    connection.execute(
-        text(
-            "INSERT INTO contenido_educativo "
-            "(id_contenido, modulo_categoria, titulo_tema, cuerpo_texto, fecha_publicacion, url_video, url_guia) "
-            "VALUES (:id_contenido, :modulo_categoria, :titulo_tema, :cuerpo_texto, :fecha_publicacion, :url_video, :url_guia) "
-            "ON CONFLICT DO NOTHING"
-        ),
-        [
-            {
-                "id_contenido": generar_uuid4(),
-                "modulo_categoria": modulo_categoria,
-                "titulo_tema": titulo_tema,
-                "cuerpo_texto": cuerpo_texto,
-                "fecha_publicacion": fecha_publicacion,
-                "url_video": url_video,
-                "url_guia": url_guia,
-            }
-            for modulo_categoria, titulo_tema, cuerpo_texto, fecha_publicacion, url_video, url_guia in contenido_educativo
-        ],
-    )
-    print("[seed] Superadmin y contenido educativo sembrados.")
+
+def importar_contenido_educativo(connection: Connection) -> None:
+    """
+    ¿Qué? Carga los módulos del catálogo educativo desde data/contenido_educativo.json,
+          y solo inserta el que todavía no existe con esa misma categoría y ese mismo título.
+    ¿Para qué? Antes los 6 módulos estaban dentro de sembrar_datos_con_uuid_generado, que solo
+              corre con la base vacía (tabla `roles` sin filas): quien ya tenía su base sembrada
+              nunca recibía módulos nuevos. Además `ON CONFLICT DO NOTHING` no servía para evitar
+              duplicados, porque la única regla de unicidad de la tabla es el `id`, y cada corrida
+              genera un `id` nuevo. Por eso se pregunta por categoría + título (issue #519).
+    ¿Impacto? Se puede correr las veces que haga falta sin duplicar nada y sin pisar el texto de
+              un módulo que el Admin del Sistema haya editado. Un módulo que el Admin borre o al
+              que le cambie el título vuelve a aparecer en la próxima corrida (solo pasa en
+              desarrollo: el Dockerfile no corre el seed en producción).
+    """
+    modulos = json.loads(CONTENIDO_EDUCATIVO_JSON.read_text(encoding="utf-8"))
+    nuevos = 0
+    for modulo in modulos:
+        resultado = connection.execute(
+            text(
+                "INSERT INTO contenido_educativo "
+                "(id_contenido, modulo_categoria, titulo_tema, cuerpo_texto, fecha_publicacion, url_video, url_guia) "
+                "SELECT :id_contenido, :modulo_categoria, :titulo_tema, :cuerpo_texto, :fecha_publicacion, "
+                ":url_video, :url_guia "
+                "WHERE NOT EXISTS ("
+                "SELECT 1 FROM contenido_educativo "
+                "WHERE modulo_categoria = :modulo_categoria AND titulo_tema = :titulo_tema)"
+            ),
+            {**modulo, "id_contenido": generar_uuid4()},
+        )
+        nuevos += resultado.rowcount
+    print(f"[seed] Contenido educativo revisado: {len(modulos)} módulos en el archivo, {nuevos} nuevos.")
 
 
 def main() -> None:
@@ -450,6 +416,10 @@ def main() -> None:
 
         # ¿Qué? Se revisa siempre (es idempotente): quien ya tenía la base sembrada recibe las ECA nuevas.
         importar_eca_inventario(connection)
+        connection.commit()
+
+        # ¿Qué? Igual que las ECA: se revisa siempre, así quien ya tenía la base sembrada recibe los módulos nuevos.
+        importar_contenido_educativo(connection)
         connection.commit()
 
         if not nucleo_ya_sembrado:

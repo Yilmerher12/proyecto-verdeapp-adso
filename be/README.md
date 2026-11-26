@@ -92,7 +92,7 @@ be/
     ├── config.py           # Configuración centralizada desde variables de entorno
     ├── database.py         # Engine y sesión de SQLAlchemy
     ├── dependencies.py     # get_db, get_current_user, require_role, require_admin_conjunto
-    ├── seed.py             # Siembra roles, localidades, cuentas de prueba, conjuntos reales y las ECA de la UAESP (idempotente)
+    ├── seed.py             # Siembra roles, localidades, cuentas de prueba, conjuntos reales, las ECA de la UAESP y los módulos educativos (idempotente)
     ├── seed_demo.py        # Comando manual: historia de demostración para presentar (3 conjuntos, auditorías con fotos, etc.)
     ├── limpiar_adjuntos.py # Comando manual: borra de uploads/adjuntos/ lo que ninguna fila usa (ver abajo)
     ├── limpiar_evidencias.py # Comando manual: borra las fotos de evidencia de auditorías con más de 6 meses (ver abajo)
