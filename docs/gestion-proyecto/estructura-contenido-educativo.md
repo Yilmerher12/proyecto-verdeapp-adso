@@ -99,6 +99,35 @@ Para que el texto corregido del seed llegue a una base que ya estaba sembrada ha
 - **Enlaces entre módulos:** hoy un módulo solo tiene un video y una guía; el texto no admite enlaces a otra categoría. Por ahora se escribe como texto ("ver la categoría Separación por colores de bolsa"). Que el texto admita enlaces sería una tarjeta aparte.
 - **Bicicletas, sillines y canecas:** fuera de esta propuesta (ver sección 2).
 
+## 7.1 Primera entrega del issue #519 (prototipo)
+
+El grupo aprobó empezar con **2 módulos nuevos por cada una de las 8 categorías**: 16 módulos nuevos, 22 en total. Cada texto cita su fuente oficial y está en `be/app/data/contenido_educativo.json`.
+
+| Categoría | Módulos nuevos |
+|---|---|
+| Separación en la fuente | Bolsa verde (orgánicos) · Casos que confunden |
+| Preparación del material | Material sucio o mojado · Vidrio, metal y latas |
+| Ecopuntos | Lo que no reciben y a dónde llevarlo · Cuándo y dónde pasan |
+| Economía circular | El recorrido del material · El reciclador de oficio |
+| Construcción y demolición | Escombros según la cantidad · Cómo elegir un gestor autorizado |
+| Consumo responsable | Los 10 mandamientos · Cómo y cuándo sacar el material |
+| Peligrosos del hogar | Pilas · Aceite de cocina usado |
+| Aparatos, llantas y baterías | Aparatos eléctricos y electrónicos · Baterías de auto y moto |
+
+**Cambios frente a la propuesta de la sección 3:**
+
+- "Qué no mezclar" (construcción y demolición) se reemplazó por "Escombros según la cantidad": ninguna fuente oficial leída lista qué no debe mezclarse con los escombros.
+- "Cómo sacar el material en Bogotá" (Resolución UAESP 701 de 2013) entró en consumo responsable, que solo tenía un módulo nuevo en la propuesta.
+- "Casos que confunden", "Material sucio o mojado" y "Vidrio, metal y latas" se apoyan en la Guía Nacional para la adecuada separación de residuos sólidos (2022), que se leyó después de la investigación #569.
+
+**Pendiente para otra entrega:** los módulos de la sección 3 que no están en la tabla (Bolsa blanca, Bolsa negra, Papel y plástico por separado, Bombillas, Medicamentos, Jeringas, Envases de insecticidas, Línea blanca, Llantas, Ecopuntos "Qué son", etc.).
+
+**Límites de la primera entrega:**
+
+- Los 3 videos nuevos son de "Marce La Recicladora" (apoyo, no fuente). Solo se confirmó que existen y su título; falta que una persona los vea completos.
+- Partes del Decreto 1381 de 2024 y del artículo 25 de la Resolución 799 de 2025 se leyeron por resumen automático; el texto sobre pilas del plegable del Ministerio de Ambiente es de 2014.
+- Hallazgos en los módulos que ya existían, sin corregir en esta entrega: el texto de preparación dice "enjuagar los frascos" de vidrio y la Guía Nacional dice que no es necesario lavarlo; el video del código de colores es del IDRD y el de consumo responsable es de un noticiero.
+
 ## 8. Preguntas para el grupo
 
 1. ¿Está de acuerdo con las 8 categorías y con dejar "Aparatos, llantas y baterías" solo de lectura?
