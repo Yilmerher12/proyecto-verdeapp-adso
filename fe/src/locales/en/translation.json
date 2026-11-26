@@ -1228,7 +1228,26 @@
     "videoCount_one": "{{count}} video",
     "videoCount_other": "{{count}} videos",
     "guideCount_one": "{{count}} guide",
-    "guideCount_other": "{{count}} guides"
+    "guideCount_other": "{{count}} guides",
+    "seenCount_one": "{{count}} seen",
+    "seenCount_other": "{{count}} seen",
+    "progress": "{{vistos}} of {{total}} lessons seen",
+    "notStarted": "Not started",
+    "complete": "Category complete",
+    "start": "Start: {{titulo}}",
+    "continue": "Continue: {{titulo}}",
+    "nextHere": "Pick up here",
+    "withVideo": "With video",
+    "phrases": {
+      "separacion": "What goes in each bag and when to put it out",
+      "preparacion": "How to leave paper, plastic and glass ready to be recycled",
+      "economiaCircular": "What happens to your white bag and who collects it",
+      "consumo": "Less waste at home and the 10 commandments of zero waste",
+      "ecopuntos": "Where to take furniture, mattresses and rubble",
+      "escombros": "What to do with rubble from works or renovations",
+      "peligrosos": "Batteries, light bulbs, medicines, oil and more",
+      "aparatos": "What to do with computers, fridges, car batteries and tires"
+    }
   },
   "tuSemana": {
     "ariaLabel": "Your week",
@@ -1239,11 +1258,20 @@
     "needsReinforcement": "That is why we recommend this lesson.",
     "keepItUp": "Keep it up! Your complex separates this topic well.",
     "recommended": "Recommended for you",
-    "view": "View lesson"
+    "view": "View lesson",
+    "allSeen": "You have already seen every lesson in this category",
+    "viewCategory": "View category"
   },
   "leccionMuro": {
-    "about": "What it is about",
     "openGuide": "Open the official guide"
+  },
+  "leccionEducativa": {
+    "breadcrumb": "Breadcrumb",
+    "neighbours": "Previous and next lesson",
+    "previous": "Previous",
+    "next": "Next",
+    "unavailable": "This lesson is no longer available.",
+    "loadError": "The lesson could not be loaded."
   },
   "adminContenidoEducativo": {
         "title": "Educational content",
@@ -1437,9 +1465,9 @@
           "updates": "Updates as you type",
           "tabsLabel": "Which part to show",
           "tabLesson": "Lesson",
-          "tabCatalog": "Catalog card",
-          "catalogHint": "This is how this module looks in the “Learn to recycle” list.",
-          "catalogNoCover": "Without a cover image the category drawing is used. Upload a cover to see it here.",
+          "tabCatalog": "List row",
+          "catalogHint": "This is how this module looks in its category list. The cover shows above the lesson (if it has no video) and on the category card.",
+          "catalogNoCover": "This is how this module looks in its category list. Without a cover, the lesson has no image on top when it has no video.",
           "categoryPlaceholder": "Category",
           "titlePlaceholder": "The title will show here",
           "bodyPlaceholder": "The content will show here, exactly as the Resident will read it."

@@ -16,11 +16,13 @@ export interface ContenidoEducativo {
   // ¿Qué? Imagen de portada opcional que sube el Administrador del Sistema.
   url_imagen: string | null;
   fecha_publicacion: string;
+  // ¿Qué? Posición del módulo dentro de su categoría (1 es el primero que se lee). La asigna el servidor.
+  orden: number;
 }
 
 export type ContenidoEducativoPayload = Omit<
   ContenidoEducativo,
-  "id_contenido" | "fecha_publicacion"
+  "id_contenido" | "fecha_publicacion" | "orden"
 >;
 
 export interface EnvioContenido {

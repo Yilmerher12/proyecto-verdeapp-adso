@@ -1,9 +1,9 @@
 /**
  * Archivo: __tests__/pages/CategoriaEducativaPage.test.tsx
- * Descripción: Tests de una categoría de "Aprende a reciclar" dibujada como muro.
- * ¿Para qué? Verificar que filtra por categoría (decodificando la URL), que parte el
- *            texto en tarjetas, que solo pinta enlaces seguros y ninguna imagen
- *            escrita dentro del texto, y que marca la lección como vista.
+ * Descripción: Tests de una categoría de "Aprende a reciclar" dibujada como lista de lecciones (issue #705).
+ * ¿Para qué? Verificar que filtra por categoría (decodificando la URL), que muestra las lecciones en su orden
+ *            de lectura con su avance, que el botón "Empezar / Continuar" lleva a la primera sin ver y que
+ *            entrar a la categoría ya NO marca nada como visto.
  */
 
 import { screen, waitFor, within } from "@testing-library/react";
@@ -14,35 +14,50 @@ import { renderWithProviders, mockUser } from "../helpers";
 import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 
 const mockListarContenido = vi.fn();
+const mockListarVistos = vi.fn();
 const mockMarcarVistos = vi.fn();
 
 vi.mock("@/lib/contenidoEducativoApi", () => ({
   listarContenido: (...args: unknown[]) => mockListarContenido(...args),
+  listarVistos: (...args: unknown[]) => mockListarVistos(...args),
   marcarVistos: (...args: unknown[]) => mockMarcarVistos(...args),
 }));
 
-const IMAGEN = "/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png";
+const ECOPUNTOS = "Puntos limpios y Ecopuntos";
+const ID1 = "00000000-0000-7000-8000-000000000001";
+const ID2 = "00000000-0000-7000-8000-000000000002";
+const ID3 = "00000000-0000-7000-8000-000000000003";
 
+const base = { url_guia: null, url_imagen: null, fecha_publicacion: "2026-08-18" };
+
+// ¿Qué? Llegan desordenados a propósito: la lista debe salir por `orden`, no por cómo llegaron.
 const modulos: ContenidoEducativo[] = [
   {
-    id_contenido: "00000000-0000-7000-8000-000000000001",
-    modulo_categoria: "Puntos limpios y Ecopuntos",
-    titulo_tema: "Dónde llevar escombros",
-    cuerpo_texto: "Los Ecopuntos reciben residuos voluminosos.",
-    url_video: "https://www.youtube.com/watch?v=abc12345678",
-    url_guia: "https://bogota.gov.co/ecopuntos",
-    url_imagen: null,
-    fecha_publicacion: "2026-08-18",
+    ...base,
+    id_contenido: ID2,
+    modulo_categoria: ECOPUNTOS,
+    titulo_tema: "Cuándo pasan los Ecopuntos",
+    cuerpo_texto: "La UAESP atiende cada zona más o menos cada cuatro semanas.",
+    url_video: null,
+    orden: 2,
   },
   {
-    id_contenido: "00000000-0000-7000-8000-000000000002",
+    ...base,
+    id_contenido: ID1,
+    modulo_categoria: ECOPUNTOS,
+    titulo_tema: "Qué son los Ecopuntos",
+    cuerpo_texto: "Puntos gratuitos para lo que no cabe en la recolección normal.\n\nQué reciben: muebles y escombros.",
+    url_video: "https://www.youtube.com/watch?v=abc12345678",
+    orden: 1,
+  },
+  {
+    ...base,
+    id_contenido: ID3,
     modulo_categoria: "Otra categoría",
     titulo_tema: "Lección de otra categoría",
     cuerpo_texto: "...",
     url_video: null,
-    url_guia: null,
-    url_imagen: null,
-    fecha_publicacion: "2026-08-18",
+    orden: 1,
   },
 ];
 
@@ -62,196 +77,113 @@ describe("CategoriaEducativaPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockListarContenido.mockResolvedValue(modulos);
+    mockListarVistos.mockResolvedValue([]);
     mockMarcarVistos.mockResolvedValue([]);
   });
 
-  it("muestra el nombre de la categoría decodificado de la URL y el título de la lección", async () => {
-    renderConRuta("Puntos limpios y Ecopuntos");
+  it("muestra el nombre de la categoría decodificado de la URL y su frase", async () => {
+    renderConRuta(ECOPUNTOS);
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Dónde llevar escombros" })).toBeInTheDocument();
-    expect(screen.getAllByText("Puntos limpios y Ecopuntos").length).toBeGreaterThan(0);
+    expect(await screen.findByRole("heading", { level: 1, name: ECOPUNTOS })).toBeInTheDocument();
+    expect(screen.getByText("Dónde llevar muebles, colchones y escombros")).toBeInTheDocument();
   });
 
-  it("solo muestra los temas de esa categoría; las demás van en 'Sigue aprendiendo'", async () => {
-    renderConRuta("Puntos limpios y Ecopuntos");
+  it("lista solo las lecciones de esa categoría, en su orden de lectura", async () => {
+    renderConRuta(ECOPUNTOS);
 
-    await screen.findByRole("heading", { level: 1, name: "Dónde llevar escombros" });
+    await screen.findByRole("heading", { level: 1, name: ECOPUNTOS });
+    const filas = screen.getAllByRole("listitem");
+    expect(filas).toHaveLength(2);
+    expect(within(filas[0]).getByText("Qué son los Ecopuntos")).toBeInTheDocument();
+    expect(within(filas[1]).getByText("Cuándo pasan los Ecopuntos")).toBeInTheDocument();
+    expect(screen.queryByText("Lección de otra categoría", { selector: "li *" })).not.toBeInTheDocument();
+  });
+
+  it("cada fila lleva a la página de su lección y muestra la primera frase como resumen", async () => {
+    renderConRuta(ECOPUNTOS);
+
+    const fila = (await screen.findByText("Qué son los Ecopuntos")).closest("a")!;
+    expect(fila).toHaveAttribute("href", `/catalogo-educativo/leccion/${ID1}`);
+    expect(within(fila).getByText("Puntos gratuitos para lo que no cabe en la recolección normal.")).toBeInTheDocument();
+  });
+
+  it("marca las lecciones con video", async () => {
+    renderConRuta(ECOPUNTOS);
+
+    const conVideo = (await screen.findByText("Qué son los Ecopuntos")).closest("a")!;
+    expect(within(conVideo).getByText("Con video")).toBeInTheDocument();
+    const sinVideo = screen.getByText("Cuándo pasan los Ecopuntos").closest("a")!;
+    expect(within(sinVideo).queryByText("Con video")).not.toBeInTheDocument();
+  });
+
+  it("entrar a la categoría NO marca ninguna lección como vista", async () => {
+    renderConRuta(ECOPUNTOS);
+
+    await screen.findByRole("heading", { level: 1, name: ECOPUNTOS });
+    expect(mockMarcarVistos).not.toHaveBeenCalled();
+  });
+
+  describe("avance y botón principal", () => {
+    it("sin lecciones vistas: 'Empezar' lleva a la primera y esa fila dice 'Sigue por aquí'", async () => {
+      renderConRuta(ECOPUNTOS);
+
+      const boton = await screen.findByRole("link", { name: /Empezar: Qué son los Ecopuntos/ });
+      expect(boton).toHaveAttribute("href", `/catalogo-educativo/leccion/${ID1}`);
+      expect(screen.getByText("2 lecciones · 0 vistas")).toBeInTheDocument();
+      const primera = screen.getByText("Qué son los Ecopuntos", { selector: "span" }).closest("a")!;
+      expect(within(primera).getByText("Sigue por aquí")).toBeInTheDocument();
+    });
+
+    it("con algunas vistas: 'Continuar' lleva a la primera sin ver y las vistas llevan su marca", async () => {
+      mockListarVistos.mockResolvedValue([ID1]);
+      renderConRuta(ECOPUNTOS);
+
+      const boton = await screen.findByRole("link", { name: /Continuar: Cuándo pasan los Ecopuntos/ });
+      expect(boton).toHaveAttribute("href", `/catalogo-educativo/leccion/${ID2}`);
+      await waitFor(() => expect(screen.getByText("2 lecciones · 1 vista")).toBeInTheDocument());
+      const barra = screen.getByRole("progressbar");
+      expect(barra).toHaveAttribute("aria-valuenow", "1");
+      expect(barra).toHaveAttribute("aria-valuemax", "2");
+      const vista = screen.getByText("Qué son los Ecopuntos", { selector: "span" }).closest("a")!;
+      expect(within(vista).getByLabelText("Visto")).toBeInTheDocument();
+    });
+
+    it("con todas vistas: dice 'Categoría completa' y no ofrece 'Continuar', pero se puede abrir cualquiera", async () => {
+      mockListarVistos.mockResolvedValue([ID1, ID2]);
+      renderConRuta(ECOPUNTOS);
+
+      expect(await screen.findByText("Categoría completa")).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /Continuar|Empezar/ })).not.toBeInTheDocument();
+      expect(screen.getByText("Qué son los Ecopuntos").closest("a")).toHaveAttribute("href", `/catalogo-educativo/leccion/${ID1}`);
+    });
+
+    it("si no se pueden consultar las vistas, la lista se ve igual, sin marcas", async () => {
+      mockListarVistos.mockRejectedValue(new Error("falló"));
+      renderConRuta(ECOPUNTOS);
+
+      expect(await screen.findByRole("link", { name: /Empezar: Qué son los Ecopuntos/ })).toBeInTheDocument();
+    });
+  });
+
+  it("las otras categorías van en 'Sigue aprendiendo'", async () => {
+    renderConRuta(ECOPUNTOS);
+
+    await screen.findByRole("heading", { level: 1, name: ECOPUNTOS });
     const seguir = screen.getByRole("heading", { name: "Sigue aprendiendo" }).closest("section")!;
-    expect(within(seguir).getByText("Lección de otra categoría")).toBeInTheDocument();
-    expect(within(seguir).queryByText("Dónde llevar escombros")).not.toBeInTheDocument();
+    const enlace = within(seguir).getByText("Otra categoría").closest("a")!;
+    expect(enlace).toHaveAttribute("href", `/catalogo-educativo/${encodeURIComponent("Otra categoría")}`);
   });
 
-  it("cuenta lecciones, videos y guías de la categoría", async () => {
-    renderConRuta("Puntos limpios y Ecopuntos");
+  it("una categoría que no existe lo dice", async () => {
+    renderConRuta("Categoría inexistente");
 
-    expect(await screen.findByText(/1 lección · 1 video · 1 guía/)).toBeInTheDocument();
+    expect(await screen.findByText("No se encontró contenido para esta categoría.")).toBeInTheDocument();
   });
 
-  describe("el texto como muro", () => {
-    const texto = [
-      "Los Ecopuntos son puntos fijos de la UAESP para voluminosos.",
-      "Qué se puede llevar: muebles viejos, colchones y escombros.",
-      "Qué NO se puede llevar: llantas ni electrodomésticos.",
-      "Usar los Ecopuntos evita que estos elementos terminen abandonados.",
-    ].join("\n\n");
+  it("tiene un enlace para volver a Aprende a reciclar", async () => {
+    renderConRuta(ECOPUNTOS);
 
-    beforeEach(() => {
-      mockListarContenido.mockResolvedValue([{ ...modulos[0], cuerpo_texto: texto }]);
-    });
-
-    it("el primer párrafo es 'De qué trata' y cada párrafo con título es una tarjeta", async () => {
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      expect(await screen.findByText("De qué trata")).toBeInTheDocument();
-      expect(screen.getByText(/puntos fijos de la UAESP/)).toBeInTheDocument();
-      expect(screen.getByRole("heading", { level: 3, name: "Qué se puede llevar" })).toBeInTheDocument();
-      expect(screen.getByRole("heading", { level: 3, name: "Qué NO se puede llevar" })).toBeInTheDocument();
-    });
-
-    it("el último párrafo sin título se muestra como cierre", async () => {
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const cierre = (await screen.findByText(/evita que estos elementos terminen abandonados/)).closest("div")!;
-      expect(cierre.closest("article")).toBeNull();
-    });
-
-    it("la imagen escrita antes de un párrafo se muestra en su tarjeta, y el resto no tiene imagen", async () => {
-      mockListarContenido.mockResolvedValue([
-        {
-          ...modulos[0],
-          cuerpo_texto: `Introducción.\n\nBolsa blanca: limpio.\n\n![foto](${IMAGEN})\n\nBolsa negra: ordinarios.\n\nGracias por separar.`,
-        },
-      ]);
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const conImagen = (await screen.findByRole("heading", { name: "Bolsa negra" })).closest("article")!;
-      expect(conImagen.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
-      const sinImagen = screen.getByRole("heading", { name: "Bolsa blanca" }).closest("article")!;
-      expect(sinImagen.querySelector("img")).toBeNull();
-    });
-
-    it("una tarjeta con imagen no se toma como cierre de la lección", async () => {
-      mockListarContenido.mockResolvedValue([
-        {
-          ...modulos[0],
-          cuerpo_texto: `Introducción.\n\nBolsa blanca: limpio.\n\n![foto](${IMAGEN})\n\nUn párrafo final con su imagen.`,
-        },
-      ]);
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const tarjeta = (await screen.findByText("Un párrafo final con su imagen.")).closest("article");
-      expect(tarjeta?.querySelector("img")).not.toBeNull();
-    });
-
-    it("una imagen de otro sitio dentro del texto no se pinta, y una suelta dentro de un párrafo tampoco", async () => {
-      mockListarContenido.mockResolvedValue([
-        {
-          ...modulos[0],
-          cuerpo_texto:
-            "Introducción.\n\n![rastreo](https://sitio-malo.com/pixel.png)\n\nBolsa blanca: limpio ![pixel](/uploads/adjuntos/7d1e2f3a-4b5c-4d6e-8f70-a1b2c3d4e5f6.jpg) y seco.",
-        },
-      ]);
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const tarjeta = (await screen.findByRole("heading", { name: "Bolsa blanca" })).closest("article")!;
-      expect(tarjeta.querySelector("img")).toBeNull();
-      expect(document.querySelector("img[src*='sitio-malo']")).toBeNull();
-      expect(document.querySelector("img[src*='7d1e2f3a']")).toBeNull();
-    });
-  });
-
-  describe("guía de apoyo", () => {
-    it("muestra el botón de la guía cuando existe", async () => {
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const link = await screen.findByRole("link", { name: /abrir la guía oficial/i });
-      expect(link).toHaveAttribute("href", "https://bogota.gov.co/ecopuntos");
-    });
-
-    // ¿Qué? Si la guía viene de un archivo subido a VerdeApp (ruta relativa), el href debe
-    //       completarse con la URL del backend; si no, el navegador la busca en el frontend.
-    it("completa con la URL del backend cuando la guía es un archivo subido", async () => {
-      mockListarContenido.mockResolvedValue([{ ...modulos[0], url_guia: "/uploads/adjuntos/guia123.pdf" }]);
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const link = await screen.findByRole("link", { name: /abrir la guía oficial/i });
-      expect(link.getAttribute("href")).toMatch(/\/uploads\/adjuntos\/guia123\.pdf$/);
-      expect(link.getAttribute("href")).not.toBe("/uploads/adjuntos/guia123.pdf");
-    });
-
-    // ¿Qué? Issue #400 (CN-048): una guía con un enlace inseguro no se pinta.
-    it.each(["javascript:alert(1)", "/uploads/%2e%2e/api/v1/users/me", "http://sitio-malo.com/guia.pdf"])(
-      "no pinta el link de guía %s",
-      async (url) => {
-        mockListarContenido.mockResolvedValue([{ ...modulos[0], url_guia: url }]);
-        renderConRuta("Puntos limpios y Ecopuntos");
-
-        expect(await screen.findByRole("heading", { level: 1, name: "Dónde llevar escombros" })).toBeInTheDocument();
-        expect(screen.queryByRole("link", { name: /abrir la guía oficial/i })).not.toBeInTheDocument();
-      }
-    );
-  });
-
-  describe("portada", () => {
-    it("con portada y sin video, la lección la muestra arriba en vez del dibujo", async () => {
-      mockListarContenido.mockResolvedValue([{ ...modulos[0], url_video: null, url_imagen: IMAGEN }]);
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const lección = (await screen.findByRole("region", { name: "Dónde llevar escombros" })) as HTMLElement;
-      expect(lección.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
-    });
-
-    it("«Sigue aprendiendo» usa la portada de la otra categoría", async () => {
-      mockListarContenido.mockResolvedValue([modulos[0], { ...modulos[1], url_imagen: IMAGEN }]);
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const seguir = (await screen.findByRole("heading", { name: "Sigue aprendiendo" })).closest("section")!;
-      expect(seguir.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
-    });
-
-    it("una portada que no es de la app no se pinta", async () => {
-      mockListarContenido.mockResolvedValue([modulos[0], { ...modulos[1], url_imagen: "https://sitio-malo.com/pixel.png" }]);
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      const seguir = (await screen.findByRole("heading", { name: "Sigue aprendiendo" })).closest("section")!;
-      expect(seguir.querySelector("img")).toBeNull();
-    });
-  });
-
-  describe("lecciones vistas", () => {
-    it("al abrir la categoría marca sus módulos como vistos y muestra Visto", async () => {
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      await waitFor(() => expect(mockMarcarVistos).toHaveBeenCalledWith([modulos[0].id_contenido]));
-      expect(await screen.findByText("Visto")).toBeInTheDocument();
-    });
-
-    it("si no se puede guardar lo visto, la página se ve igual, sin la marca", async () => {
-      mockMarcarVistos.mockRejectedValue(new Error("falló"));
-      renderConRuta("Puntos limpios y Ecopuntos");
-
-      expect(await screen.findByRole("heading", { level: 1, name: "Dónde llevar escombros" })).toBeInTheDocument();
-      await waitFor(() => expect(mockMarcarVistos).toHaveBeenCalled());
-      expect(screen.queryByText("Visto")).not.toBeInTheDocument();
-    });
-
-    it("una categoría sin contenido no marca nada", async () => {
-      renderConRuta("Categoría inexistente");
-
-      expect(await screen.findByText("No se encontró contenido para esta categoría.")).toBeInTheDocument();
-      expect(mockMarcarVistos).not.toHaveBeenCalled();
-    });
-  });
-
-  it("con varias lecciones, cada una lleva su título y el encabezado es la categoría", async () => {
-    mockListarContenido.mockResolvedValue([
-      modulos[0],
-      { ...modulos[0], id_contenido: "00000000-0000-7000-8000-000000000009", titulo_tema: "Segunda lección" },
-    ]);
-    renderConRuta("Puntos limpios y Ecopuntos");
-
-    expect(await screen.findByRole("heading", { level: 1, name: "Puntos limpios y Ecopuntos" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Dónde llevar escombros" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Segunda lección" })).toBeInTheDocument();
+    const volver = await screen.findByRole("link", { name: /Volver a Aprende a reciclar/ });
+    expect(volver).toHaveAttribute("href", "/catalogo-educativo");
   });
 });

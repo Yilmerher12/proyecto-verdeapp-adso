@@ -39,6 +39,7 @@ import { ProfilePage } from "@/pages/ProfilePage";
 import { DirectorioPage } from "@/pages/DirectorioPage";
 import { CatalogoEducativoPage } from "@/pages/CatalogoEducativoPage";
 import { CategoriaEducativaPage } from "@/pages/CategoriaEducativaPage";
+import { LeccionEducativaPage } from "@/pages/LeccionEducativaPage";
 import { AdminContenidoEducativoPage } from "@/pages/AdminContenidoEducativoPage";
 import { AdminPuntosAcopioPage } from "@/pages/AdminPuntosAcopioPage";
 import { AdminConjuntoComunicadosPage } from "@/pages/AdminConjuntoComunicadosPage";
@@ -206,6 +207,18 @@ function App() {
                   <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
                     <AppShell>
                       <CatalogoEducativoPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/catalogo-educativo/leccion/:id"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+                    <AppShell>
+                      <LeccionEducativaPage />
                     </AppShell>
                   </RoleGuard>
                 </ProtectedRoute>

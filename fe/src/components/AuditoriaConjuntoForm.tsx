@@ -20,6 +20,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { crearAuditoria, type AuditoriaConjunto, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
 import { listarContenido } from "@/lib/contenidoEducativoApi";
+import { agruparPorCategoria } from "@/lib/progresoEducativo";
 import { NIVELES_DESEMPENO, ORDEN_NIVELES_SELECCIONABLES } from "@/config/nivelesDesempeno";
 import { CATEGORIAS_NO_AUDITABLES, NOMBRE_SIMPLE_CATEGORIA } from "@/config/categoriasEducativas";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
@@ -116,9 +117,11 @@ export function AuditoriaConjuntoForm({
   useEffect(() => {
     listarContenido()
       .then((contenido) => {
-        const categorias = new Set(contenido.map((c) => c.modulo_categoria));
-        CATEGORIAS_NO_AUDITABLES.forEach((c) => categorias.delete(c));
-        setTemas(Array.from(categorias));
+        // ¿Qué? Mismo orden de categorías que el catálogo (issue #705): el servidor ya no ordena por fecha.
+        const categorias = agruparPorCategoria(contenido)
+          .map((c) => c.nombre)
+          .filter((nombre) => !CATEGORIAS_NO_AUDITABLES.has(nombre));
+        setTemas(categorias);
       })
       .catch(() => setTemas([]));
   }, []);

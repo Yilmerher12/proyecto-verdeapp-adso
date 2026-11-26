@@ -104,3 +104,15 @@ export function partirEnTarjetas(cuerpo: string): MuroParseado {
 
   return { introduccion, tarjetas, cierre };
 }
+
+const ES_FUENTE = /^fuentes?$/i;
+
+// ¿Qué? El texto de una lección ya partido: introducción, secciones, cierre y, aparte, su fuente (la última sección
+//       titulada "Fuente"). La usan la tarjeta de la lección y su ficha lateral (issue #705).
+export function partesDeLeccion(cuerpo: string) {
+  const { introduccion, tarjetas, cierre } = partirEnTarjetas(cuerpo);
+  const ultima = tarjetas[tarjetas.length - 1];
+  const fuente = ultima?.titulo && ES_FUENTE.test(ultima.titulo) ? ultima : undefined;
+  return { introduccion, secciones: fuente ? tarjetas.slice(0, -1) : tarjetas, cierre, fuente };
+}
+

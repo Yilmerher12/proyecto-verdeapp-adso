@@ -9,19 +9,21 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { extraerIdDeYoutube } from "@/lib/youtube";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { TuSemana } from "@/components/educativo/TuSemana";
-import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
+import { FRASE_CATEGORIA, ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
 import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
 import { listarContenido, listarVistos, type ContenidoEducativo } from "@/lib/contenidoEducativoApi";
+import { agruparPorCategoria, progresoDe, rutaCategoria, rutaLeccion } from "@/lib/progresoEducativo";
 
 /**
- * ¿Qué? "Aprende a reciclar": cómo le fue al conjunto esta semana, el avance del
- *       Residente, una tarjeta con imagen por categoría y un video destacado.
- * ¿Para qué? Cada categoría muestra su dibujo, el título de su lección más
- *           reciente y si el Residente ya la vio.
- * ¿Impacto? Sale de tres fuentes: el contenido completo del catálogo, las
- *           lecciones vistas y la última auditoría del conjunto (la consulta la
- *           hace TuSemana). Si falla la lista de vistas, se muestra el catálogo
- *           igual, sin marcas ni avance; si falla la auditoría, sin ese bloque.
+ * ¿Qué? "Aprende a reciclar" en tres tarjetas, cada una con su título adentro: (1) el encabezado con "Tu
+ *       semana" y "Tu avance", (2) las categorías de aprendizaje y (3) el video destacado.
+ * ¿Para qué? Antes eran siete bloques sueltos: cinco tarjetas solo con un título, separadas de lo que
+ *           titulan. Una tarjeta por tema deja claro qué va con qué (issue #705,
+ *           docs/gestion-proyecto/rediseno-aprende-a-reciclar.md). Cada categoría dice de qué trata y
+ *           cuánto lleva el Residente.
+ * ¿Impacto? Sale de dos fuentes: el contenido completo del catálogo y las lecciones vistas (la auditoría
+ *           la consulta TuSemana por su cuenta). Si falla la lista de vistas, el catálogo se ve igual, sin
+ *           avance; si falla la auditoría, sin ese bloque. El video destacado abre la lección donde está.
  */
 export function CatalogoEducativoPage() {
   const { t } = useTranslation();
@@ -40,31 +42,18 @@ export function CatalogoEducativoPage() {
       .catch(() => setVistos(new Set()));
   }, [t]);
 
-  // ¿Qué? Las categorías en el orden en que aparecen (la lista ya viene con lo más reciente primero).
-  const categorias = useMemo(() => {
-    const porNombre = new Map<string, ContenidoEducativo[]>();
-    for (const modulo of contenido) {
-      porNombre.set(modulo.modulo_categoria, [...(porNombre.get(modulo.modulo_categoria) ?? []), modulo]);
-    }
-    return Array.from(porNombre, ([nombre, modulos]) => ({ nombre, modulos }));
-  }, [contenido]);
+  const categorias = useMemo(() => agruparPorCategoria(contenido), [contenido]);
 
-  const destacado = contenido.find((c) => c.url_video && extraerIdDeYoutube(c.url_video));
+  // ¿Qué? El primer módulo con un video de YouTube, en el orden del catálogo.
+  const destacado = categorias.flatMap((c) => c.modulos).find((m) => m.url_video && extraerIdDeYoutube(m.url_video));
   const idDestacado = destacado?.url_video ? extraerIdDeYoutube(destacado.url_video) : null;
   const totalVistas = contenido.filter((c) => vistos.has(c.id_contenido)).length;
   const porcentaje = contenido.length ? Math.round((totalVistas / contenido.length) * 100) : 0;
 
-  return (
-    <div className={`${ANCHO_PAGINA.normal} space-y-10 pt-6 pb-12`}>
-      {/* ¿Qué? Los títulos (el de la página y los de cada sección) van en una tarjeta, no sueltos sobre el fondo.
-          ¿Para qué? Igual que el título "Mi conjunto" del panel del Residente: se leen como parte de la
-                    pantalla y no se pierden sobre el fondo. Se conserva el estilo propio de Aprende a
-                    reciclar (esquinas más redondeadas). */}
-      <header className="space-y-2 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
-        <p className="max-w-2xl text-base text-gray-600 dark:text-gray-300">{t("catalogoEducativo.subtitle")}</p>
-      </header>
+  const tarjeta = "rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card sm:p-8";
 
+  return (
+    <div className={`${ANCHO_PAGINA.normal} space-y-8 pt-6 pb-12`}>
       {cargando && <Esqueleto mensaje={t("catalogoEducativo.loading")} variante="tarjetas" cantidad={9} alto="h-80" />}
       {error && <Alert type="error" message={error} />}
 
@@ -74,51 +63,60 @@ export function CatalogoEducativoPage() {
 
       {!cargando && !error && categorias.length > 0 && (
         <>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-            <div className="min-w-0 lg:flex-[1.7]">
-              <TuSemana contenido={contenido} />
-            </div>
-            <section
-              aria-label={t("catalogoEducativo.progress.title")}
-              className="flex flex-col justify-center gap-4 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card lg:flex-1"
-            >
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {t("catalogoEducativo.progress.title")}
-              </span>
-              <p className="text-base text-gray-600 dark:text-gray-300">
-                <span className="mr-2 text-2xl font-bold text-accent-700 dark:text-accent-400">{totalVistas}</span>
-                {t("catalogoEducativo.progress.of", { total: contenido.length })}
-              </p>
-              <div
-                className="h-2.5 overflow-hidden rounded-full bg-accent-50 dark:bg-accent-300/10"
-                role="progressbar"
-                aria-valuenow={totalVistas}
-                aria-valuemin={0}
-                aria-valuemax={contenido.length}
-                aria-label={t("catalogoEducativo.progress.title")}
-              >
-                <div className="h-full bg-accent-600 dark:bg-accent-300" style={{ width: `${porcentaje}%` }} />
+          <section className={`${tarjeta} space-y-6`} aria-labelledby="titulo-aprende">
+            <header className="space-y-2">
+              <h1 id="titulo-aprende" className="text-2xl font-bold text-gray-900 dark:text-white">
+                {t("catalogoEducativo.title")}
+              </h1>
+              <p className="max-w-2xl text-base text-gray-600 dark:text-gray-300">{t("catalogoEducativo.subtitle")}</p>
+            </header>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
+              <div className="min-w-0 lg:flex-[1.7]">
+                <TuSemana contenido={contenido} vistos={vistos} />
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t("catalogoEducativo.progress.hint")}</p>
-            </section>
-          </div>
+              <section
+                aria-label={t("catalogoEducativo.progress.title")}
+                className="flex flex-col justify-center gap-4 rounded-2xl border border-gray-100 p-6 dark:border-night-line lg:flex-1"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {t("catalogoEducativo.progress.title")}
+                </span>
+                <p className="text-base text-gray-600 dark:text-gray-300">
+                  <span className="mr-2 text-2xl font-bold text-accent-700 dark:text-accent-400">{totalVistas}</span>
+                  {t("catalogoEducativo.progress.of", { total: contenido.length })}
+                </p>
+                <div
+                  className="h-2.5 overflow-hidden rounded-full bg-accent-50 dark:bg-accent-300/10"
+                  role="progressbar"
+                  aria-valuenow={totalVistas}
+                  aria-valuemin={0}
+                  aria-valuemax={contenido.length}
+                  aria-label={t("catalogoEducativo.progress.title")}
+                >
+                  <div className="h-full bg-accent-600 dark:bg-accent-300" style={{ width: `${porcentaje}%` }} />
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t("catalogoEducativo.progress.hint")}</p>
+              </section>
+            </div>
+          </section>
 
-          <section aria-labelledby="titulo-categorias" className="space-y-5">
-            <h2 id="titulo-categorias" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
+          <section aria-labelledby="titulo-categorias" className={`${tarjeta} space-y-5`}>
+            <h2 id="titulo-categorias" className="text-lg font-bold text-gray-900 dark:text-white">
               {t("catalogoEducativo.categoriesTitle")}
             </h2>
-            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {categorias.map(({ nombre, modulos }) => {
                 const Icono = ICONOS_CATEGORIAS[nombre] ?? ICONO_CATEGORIA_DEFAULT;
                 const portada = imagenPropiaSegura(modulos.find((m) => m.url_imagen)?.url_imagen);
-                const visto = modulos.every((m) => vistos.has(m.id_contenido));
+                const progreso = progresoDe(modulos, vistos);
+                const claveFrase = FRASE_CATEGORIA[nombre];
                 return (
                   <Link
                     key={nombre}
-                    to={`/catalogo-educativo/${encodeURIComponent(nombre)}`}
-                    className="group flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white transition-transform hover:-translate-y-0.5 dark:border-night-line dark:bg-night-card"
+                    to={rutaCategoria(nombre)}
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-transform hover:-translate-y-0.5 dark:border-night-line dark:bg-night-card"
                   >
-                    <div className="relative h-44 bg-accent-50 dark:bg-accent-300/10" aria-hidden="true">
+                    <div className="relative h-36 bg-accent-50 dark:bg-accent-300/10" aria-hidden="true">
                       {portada ? (
                         <img src={portada} alt="" className="h-full w-full object-cover" />
                       ) : (
@@ -128,28 +126,38 @@ export function CatalogoEducativoPage() {
                         <Icono className="icon-md" />
                       </span>
                     </div>
-                    <div className="flex flex-1 flex-col gap-3 p-6">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {nombre}
-                      </span>
-                      <span className="text-lg font-bold leading-snug text-gray-900 dark:text-white">
-                        {modulos[0].titulo_tema}
-                      </span>
-                      <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-                        {visto ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 text-sm font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-                            <Check className="icon-sm" aria-hidden="true" />
-                            {t("catalogoEducativo.seen")}
-                          </span>
-                        ) : (
-                          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            {t("catalogoEducativo.notSeen")}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-700 dark:text-accent-400">
-                          {t("catalogoEducativo.viewLesson")}
-                          <ChevronRight className="icon-md transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                        </span>
+                    <div className="flex flex-1 flex-col gap-2 p-5">
+                      <span className="text-base font-bold leading-snug text-gray-900 dark:text-white">{nombre}</span>
+                      {claveFrase && <span className="text-sm text-gray-600 dark:text-gray-300">{t(claveFrase)}</span>}
+                      <div className="mt-auto space-y-2 pt-3">
+                        <div
+                          className="h-2 overflow-hidden rounded-full bg-accent-50 dark:bg-accent-300/10"
+                          role="progressbar"
+                          aria-valuenow={progreso.vistos}
+                          aria-valuemin={0}
+                          aria-valuemax={progreso.total}
+                          aria-label={t("categoriaEducativa.progress", { vistos: progreso.vistos, total: progreso.total })}
+                        >
+                          <div
+                            className="h-full bg-accent-600 dark:bg-accent-300"
+                            style={{ width: `${progreso.total ? Math.round((progreso.vistos / progreso.total) * 100) : 0}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          {progreso.estado === "completa" ? (
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-700 dark:text-accent-400">
+                              <Check className="icon-sm" aria-hidden="true" />
+                              {t("categoriaEducativa.complete")}
+                            </span>
+                          ) : (
+                            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                              {progreso.estado === "sinEmpezar"
+                                ? t("categoriaEducativa.notStarted")
+                                : t("categoriaEducativa.progress", { vistos: progreso.vistos, total: progreso.total })}
+                            </span>
+                          )}
+                          <ChevronRight className="icon-md shrink-0 text-accent-700 transition-transform group-hover:translate-x-0.5 dark:text-accent-400" aria-hidden="true" />
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -159,13 +167,13 @@ export function CatalogoEducativoPage() {
           </section>
 
           {destacado && idDestacado && (
-            <section aria-labelledby="titulo-destacado" className="space-y-5">
-              <h2 id="titulo-destacado" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
+            <section aria-labelledby="titulo-destacado" className={`${tarjeta} space-y-5`}>
+              <h2 id="titulo-destacado" className="text-lg font-bold text-gray-900 dark:text-white">
                 {t("catalogoEducativo.featuredTitle")}
               </h2>
               <Link
-                to={`/catalogo-educativo/${encodeURIComponent(destacado.modulo_categoria)}`}
-                className="flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white transition-transform hover:-translate-y-0.5 dark:border-night-line dark:bg-night-card md:flex-row"
+                to={rutaLeccion(destacado.id_contenido)}
+                className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 transition-transform hover:-translate-y-0.5 dark:border-night-line md:flex-row"
               >
                 <span className="relative block aspect-video bg-gray-900 md:w-1/2" aria-hidden="true">
                   <img src={`https://img.youtube.com/vi/${idDestacado}/hqdefault.jpg`} alt="" className="h-full w-full object-cover" />
