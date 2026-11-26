@@ -242,7 +242,7 @@ Estas tareas **no se hacen aquí**; cada una se abre como tarjeta aparte cuando 
 - ~~Reorganizar los 6 módulos actuales y definir qué módulos nacen de cada uno.~~ **Hecho en el issue #597:** ver [estructura del contenido educativo](estructura-contenido-educativo.md).
 - ~~Definir dónde viven los temas que hoy faltan (residuos especiales y orgánicos).~~ **Hecho en el issue #597:** dos categorías nuevas, y los orgánicos en la bolsa verde de "Separación en la fuente".
 - ~~Corregir lo que hoy dice el seed sobre Ecopuntos y recicladores (sección 2).~~ **Hecho en el issue #597.**
-- ~~Redactar los módulos nuevos (#519).~~ **Primera entrega hecha en el issue #519** (16 módulos nuevos): ver la sección 7.1 de la [estructura del contenido educativo](estructura-contenido-educativo.md).
+- ~~Redactar los módulos nuevos (#519).~~ **Hecho en el issue #519** (28 módulos en total): ver la sección 7.1 de la [estructura del contenido educativo](estructura-contenido-educativo.md).
 - La pantalla "¿Dónde llevo cada cosa?" (tarjeta 9), que puede usar directamente la tabla de la sección 5.
 
 ## 10. Límites de esta investigación

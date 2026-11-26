@@ -99,34 +99,49 @@ Para que el texto corregido del seed llegue a una base que ya estaba sembrada ha
 - **Enlaces entre módulos:** hoy un módulo solo tiene un video y una guía; el texto no admite enlaces a otra categoría. Por ahora se escribe como texto ("ver la categoría Separación por colores de bolsa"). Que el texto admita enlaces sería una tarjeta aparte.
 - **Bicicletas, sillines y canecas:** fuera de esta propuesta (ver sección 2).
 
-## 7.1 Primera entrega del issue #519 (prototipo)
+## 7.1 Entrega del issue #519
 
-El grupo aprobó empezar con **2 módulos nuevos por cada una de las 8 categorías**: 16 módulos nuevos, 22 en total. Cada texto cita su fuente oficial y está en `be/app/data/contenido_educativo.json`.
+El catálogo pasó de 6 a **28 módulos** en las 8 categorías. Cada texto cita su fuente oficial, está redactado en un estilo corto (apertura, 3 o 4 tarjetas con listas) y vive en `be/app/data/contenido_educativo.json`. En cada categoría el catálogo los muestra en orden de aprendizaje.
 
-| Categoría | Módulos nuevos |
+Los 6 módulos originales **ya no existen tal cual**: se revisaron contra los nuevos y se reescribieron, se fusionaron o se eliminaron, para no dejar módulos que repitan lo mismo.
+
+| Categoría | Módulos |
 |---|---|
-| Separación en la fuente | Bolsa verde (orgánicos) · Casos que confunden |
-| Preparación del material | Material sucio o mojado · Vidrio, metal y latas |
-| Ecopuntos | Lo que no reciben y a dónde llevarlo · Cuándo y dónde pasan |
-| Economía circular | El recorrido del material · El reciclador de oficio |
-| Construcción y demolición | Escombros según la cantidad · Cómo elegir un gestor autorizado |
-| Consumo responsable | Los 10 mandamientos · Cómo y cuándo sacar el material |
-| Peligrosos del hogar | Pilas · Aceite de cocina usado |
-| Aparatos, llantas y baterías | Aparatos eléctricos y electrónicos · Baterías de auto y moto |
+| Separación en la fuente (6) | Los 3 colores de un vistazo · Bolsa blanca · Bolsa negra · Bolsa verde · Casos que confunden · A qué hora sacar la bolsa blanca |
+| Preparación del material (4) | Limpio y seco · Papel y cartón · Plástico · Vidrio y latas |
+| Ecopuntos (2) | Qué son y qué reciben · Cuándo y dónde pasan |
+| Economía circular (3) | Qué es la economía circular · El recorrido del material · El reciclador de oficio |
+| Construcción y demolición (2) | Escombros según la cantidad · Cómo elegir un gestor autorizado |
+| Consumo responsable (2) | Menos basura desde casa · Los 10 mandamientos |
+| Peligrosos del hogar (6) | Pilas · Bombillas · Medicamentos vencidos · Aceite de cocina usado · Envases de insecticida · Jeringas y agujas |
+| Aparatos, llantas y baterías (3) | Aparatos eléctricos y línea blanca · Baterías de auto y moto · Llantas |
 
-**Cambios frente a la propuesta de la sección 3:**
+**Qué pasó con los 6 originales y por qué:**
+
+- **Código de colores** (Separación): repetía lo que explican Blanca, Negra y Verde; se reescribió como "Los 3 colores de un vistazo".
+- **Cómo preparar cada material** (Preparación): repetía Papel, Plástico y Vidrio y contradecía la Guía Nacional (decía "enjuagar" el vidrio y la guía dice que no hace falta lavarlo); se eliminó. "Limpio y seco" quedó como la regla general.
+- **Ecopuntos: qué son y cómo usarlos**: repetía "qué sí y qué no" y "cuándo pasan"; se fusionó en "Qué son y qué reciben".
+- **Economía circular: el papel del reciclador**: se cruzaba con "El reciclador de oficio" y tenía frases sin fuente; se reescribió como "Qué es la economía circular".
+- **Manejo de escombros (RCD)**: repetía "Escombros según la cantidad" y "Gestor autorizado" y citaba comparendos sin fuente; se eliminó.
+- **Consumo responsable: reducir antes de reciclar**: es el único que responde al tema que califica el Reciclador ("cantidad de basura generada"); se reescribió sin las frases sin fuente y sin su video, que era de un noticiero.
+- El video del código de colores era del IDRD y ya no se usa.
+
+**Otros cambios frente a la propuesta de la sección 3:**
 
 - "Qué no mezclar" (construcción y demolición) se reemplazó por "Escombros según la cantidad": ninguna fuente oficial leída lista qué no debe mezclarse con los escombros.
-- "Cómo sacar el material en Bogotá" (Resolución UAESP 701 de 2013) entró en consumo responsable, que solo tenía un módulo nuevo en la propuesta.
-- "Casos que confunden", "Material sucio o mojado" y "Vidrio, metal y latas" se apoyan en la Guía Nacional para la adecuada separación de residuos sólidos (2022), que se leyó después de la investigación #569.
+- "A qué hora sacar la bolsa blanca" (Resolución UAESP 701 de 2013) está en Separación y no en consumo responsable, porque trata de cómo presentar el material.
+- La Guía Nacional matiza la bolsa verde: se usa solo si hay una ruta de recolección y tratamiento de orgánicos; si no la hay, los orgánicos van a la bolsa negra o al compost casero. Los módulos de Separación lo dicen así.
+- "Papel y plástico", "Vidrio, metal y latas" y "Línea blanca" de la propuesta quedaron como "Papel y cartón", "Plástico", "Vidrio y latas" y dentro de "Aparatos eléctricos y línea blanca".
+- Casi todos los módulos de separación y preparación se apoyan en la Guía Nacional para la adecuada separación de residuos sólidos (2022), que se leyó después de la investigación #569.
 
-**Pendiente para otra entrega:** los módulos de la sección 3 que no están en la tabla (Bolsa blanca, Bolsa negra, Papel y plástico por separado, Bombillas, Medicamentos, Jeringas, Envases de insecticidas, Línea blanca, Llantas, Ecopuntos "Qué son", etc.).
+**Pendiente para otra tarjeta** (propuesto en la revisión de esta entrega): módulos de reducción y compost, "¿Para qué sirve reciclar?" con datos de la Guía Nacional, ropa y zapatos usados, un mapa de "qué va a dónde" para peligrosos, qué hace la Línea 110 con muebles y escombros, y una tarjeta "¿Por qué importa?" en cada módulo.
 
-**Límites de la primera entrega:**
+**Límites de la entrega:**
 
-- Los 3 videos nuevos son de "Marce La Recicladora" (apoyo, no fuente). Solo se confirmó que existen y su título; falta que una persona los vea completos.
+- "Jeringas y agujas" es un módulo corto: las fuentes oficiales leídas no dan un punto de entrega concreto para los hogares. "Envases de insecticida" se apoya en la Resolución 1675 de 2013 y en el plegable del Ministerio de Ambiente (2014); la Guía Nacional no trae una sección de plaguicidas.
+- Los 3 videos son de "Marce La Recicladora" (apoyo, no fuente). Solo se confirmó que existen y su título; falta que una persona los vea completos.
 - Partes del Decreto 1381 de 2024 y del artículo 25 de la Resolución 799 de 2025 se leyeron por resumen automático; el texto sobre pilas del plegable del Ministerio de Ambiente es de 2014.
-- Hallazgos en los módulos que ya existían, sin corregir en esta entrega: el texto de preparación dice "enjuagar los frascos" de vidrio y la Guía Nacional dice que no es necesario lavarlo; el video del código de colores es del IDRD y el de consumo responsable es de un noticiero.
+- El seed no borra ni actualiza módulos en una base ya sembrada: quien tenga los 6 originales debe reiniciar el volumen de Docker para recibir los 28 actuales.
 
 ## 8. Preguntas para el grupo
 
