@@ -40,7 +40,7 @@ Sin parámetros de entrada — la petición trae el catálogo completo, sin filt
 3. El backend consulta la tabla `contenido_educativo` y devuelve todo el catálogo, ordenado del módulo más reciente al más antiguo.
 4. El frontend agrupa los módulos por `modulo_categoria` y dibuja una tarjeta por categoría, con la portada de su módulo (`url_imagen`) o, si no tiene, un dibujo fijo propio de cada categoría, el título de su lección más reciente y un "Video destacado".
 5. Arriba muestra "Tu semana": con la misma consulta del historial de auditorías del conjunto (`listarHistorial`) toma la última auditoría y, si salió Regular o Malo, recomienda la lección cuya categoría tiene el nombre del tema de esa auditoría. No hay endpoint nuevo.
-6. Si el usuario entra a una categoría específica, el frontend filtra la lista ya cargada — no hace una segunda petición de contenido al backend — y dibuja cada módulo como un muro: video, "De qué trata" y una tarjeta por párrafo (regla en `fe/src/lib/muroLeccion.ts`).
+6. Si el usuario entra a una categoría específica (`/catalogo-educativo/:categoria`), el frontend filtra la lista ya cargada y dibuja la lista de sus lecciones en su orden de lectura (`orden`), con el avance del Residente. Cada lección vive en su propia página (`/catalogo-educativo/leccion/:id`), donde se dibuja como una sola tarjeta (la introducción es el primer párrafo sin título; cada párrafo con título es una sección; regla en `fe/src/lib/muroLeccion.ts`) y se marca como vista solo esa lección (issue #705, [decisiones](../../gestion-proyecto/rediseno-aprende-a-reciclar.md)).
 7. Lecciones vistas: al cargar el catálogo el frontend hace `GET /api/v1/contenido-educativo/vistos` para saber cuáles módulos ya abrió el Residente (cada categoría dice "Visto" si todos los suyos lo están, y una barra muestra "N de M lecciones vistas"). Al abrir una categoría hace `POST /api/v1/contenido-educativo/vistos` con los ids de sus módulos. Si alguna de las dos llamadas falla, las páginas se ven igual, sin la marca.
 
 ---
@@ -49,7 +49,7 @@ Sin parámetros de entrada — la petición trae el catálogo completo, sin filt
 
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Consulta exitosa    | 200         | JSON con la lista de módulos: `[{"id_contenido": "...", "modulo_categoria": "...", "titulo_tema": "...", "cuerpo_texto": "...", "url_video": "...", "url_guia": "...", "url_imagen": "...", "fecha_publicacion": "..."}]` |
+| Consulta exitosa    | 200         | JSON con la lista de módulos: `[{"id_contenido": "...", "modulo_categoria": "...", "titulo_tema": "...", "cuerpo_texto": "...", "url_video": "...", "url_guia": "...", "url_imagen": "...", "fecha_publicacion": "...", "orden": 1}]`. Sale agrupado por categoría y, dentro de cada una, en su orden de lectura (`orden`, issue #705) |
 | Sin contenido       | 200         | Array vacío `[]`                                                                                             |
 
 ---
@@ -73,4 +73,4 @@ Sin parámetros de entrada — la petición trae el catálogo completo, sin filt
 - RN-001: El catálogo educativo es de acceso exclusivo de lectura para los usuarios finales. No pueden crear, editar ni eliminar contenido.
 - RN-002: Ninguna imagen escrita dentro del texto de un módulo se muestra al Residente. Solo se pinta el video y, para el enlace de la guía, lo que permite `enlaceAdjuntoSeguro`.
 - RN-003: Las lecciones vistas se guardan una vez por Residente y módulo (tabla `contenido_educativo_vistos`). "Visto" significa que el Residente abrió la lección, no que reprodujo el video completo. Si el módulo se elimina, sus marcas se eliminan con él; si se edita, se mantienen.
-- RN-004: Solo se muestran imágenes subidas a VerdeApp (`/uploads/adjuntos/...`), tanto la portada como las que van dentro del texto, que el muro pega a la tarjeta que sigue. El frontend las revisa con `imagenPropiaSegura` y una imagen de otro sitio no se pinta (RQF-010, RN-005).
+- RN-004: Solo se muestran imágenes subidas a VerdeApp (`/uploads/adjuntos/...`), tanto la portada como las que van dentro del texto, que se pegan a la sección que sigue. El frontend las revisa con `imagenPropiaSegura` y una imagen de otro sitio no se pinta (RQF-010, RN-005).

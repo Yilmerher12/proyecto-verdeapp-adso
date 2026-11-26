@@ -42,7 +42,7 @@ archivos_subidos(_id_, #id_usuario, ruta, created_at)
 auditorias_conjunto(_id_auditoria_, #id_reciclador, #id_conjunto_residencial, nivel_desempeno, tema_educativo, descripcion, ruta_evidencia, ruta_evidencia_2, ruta_evidencia_3, created_at, orden_interno)
 comunicados(_id_comunicado_, #id_conjunto_residencial, #id_administrador, destinatarios, tipo, texto, url_adjunto, fecha_evento, fecha_expiracion, created_at, fecha_edicion)
 conjuntos_residenciales(_id_conjunto_residencial_, #id_localidad, nombre_conjunto, nit, direccion, total_apartamentos, verificado, #verificado_por_id, codigo_acceso)
-contenido_educativo(_id_contenido_, modulo_categoria, titulo_tema, cuerpo_texto, fecha_publicacion, url_video, url_guia, url_imagen)
+contenido_educativo(_id_contenido_, modulo_categoria, titulo_tema, cuerpo_texto, fecha_publicacion, orden, url_video, url_guia, url_imagen)
 contenido_educativo_envios(_id_, #id_contenido, #id_conjunto_residencial, #enviado_por_id, created_at)
 contenido_educativo_vistos(#_id_usuario_, #_id_contenido_, visto_at)
 email_verification_tokens(_id_, #id_usuario, token, expires_at, used, created_at)
@@ -172,6 +172,7 @@ usuarios(_id_usuario_, #id_rol, correo_electronico, password, is_active, habilit
 | titulo_tema | VARCHAR(255) | No |  |  |
 | cuerpo_texto | TEXT | No |  |  |
 | fecha_publicacion | DATE | No |  |  |
+| orden | INTEGER | No |  | Por defecto 0; posición dentro de su categoría |
 | url_video | VARCHAR(500) | Sí |  |  |
 | url_guia | VARCHAR(500) | Sí |  |  |
 | url_imagen | VARCHAR(500) | Sí |  |  |

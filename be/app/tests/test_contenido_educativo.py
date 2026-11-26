@@ -163,3 +163,82 @@ class TestEditarYEliminar:
     ):
         response = client.delete(f"{URL}/{uuid.uuid4()}", headers=admin_sistema_auth_headers)
         assert response.status_code == 404
+
+
+class TestOrden:
+    """
+    ¿Qué? Orden de lectura de los módulos dentro de su categoría (issue #705).
+    ¿Para qué? "Anterior / Siguiente" y "la primera lección sin ver" dependen de este orden.
+    ¿Impacto? Un módulo nuevo queda al final de su categoría; el catálogo sale agrupado por categoría.
+    """
+
+    def _crear(self, client, headers, **overrides):
+        respuesta = client.post(URL, json=_payload(**overrides), headers=headers)
+        assert respuesta.status_code == 201
+        return respuesta.json()
+
+    def test_los_modulos_nuevos_de_una_categoria_quedan_al_final(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ):
+        primero = self._crear(client, admin_sistema_auth_headers, titulo_tema="Primer módulo de la categoría")
+        segundo = self._crear(client, admin_sistema_auth_headers, titulo_tema="Segundo módulo de la categoría")
+
+        assert primero["orden"] == 1
+        assert segundo["orden"] == 2
+
+    def test_cada_categoria_lleva_su_propia_cuenta(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ):
+        self._crear(client, admin_sistema_auth_headers, titulo_tema="Módulo de la categoría uno")
+        otra = self._crear(
+            client, admin_sistema_auth_headers, modulo_categoria="Otra categoría", titulo_tema="Módulo de otra categoría"
+        )
+
+        assert otra["orden"] == 1
+
+    def test_el_catalogo_sale_agrupado_por_categoria_y_en_orden(
+        self, client: TestClient, auth_headers: dict[str, str], admin_sistema_auth_headers: dict[str, str]
+    ):
+        self._crear(client, admin_sistema_auth_headers, modulo_categoria="B categoría", titulo_tema="B primero")
+        self._crear(client, admin_sistema_auth_headers, modulo_categoria="A categoría", titulo_tema="A primero")
+        self._crear(client, admin_sistema_auth_headers, modulo_categoria="B categoría", titulo_tema="B segundo")
+
+        lista = client.get(URL, headers=auth_headers).json()
+
+        assert [m["titulo_tema"] for m in lista] == ["A primero", "B primero", "B segundo"]
+
+    def test_un_modulo_que_cambia_de_categoria_pasa_al_final_de_la_nueva(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ):
+        self._crear(client, admin_sistema_auth_headers, modulo_categoria="Destino", titulo_tema="Ya estaba en destino")
+        movido = self._crear(client, admin_sistema_auth_headers, modulo_categoria="Origen", titulo_tema="Se va a mover")
+
+        respuesta = client.put(
+            f"{URL}/{movido['id_contenido']}",
+            json=_payload(modulo_categoria="Destino", titulo_tema="Se va a mover"),
+            headers=admin_sistema_auth_headers,
+        )
+
+        assert respuesta.status_code == 200
+        assert respuesta.json()["orden"] == 2
+
+    def test_editar_sin_cambiar_de_categoria_conserva_el_orden(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ):
+        self._crear(client, admin_sistema_auth_headers, titulo_tema="Primer módulo de la categoría")
+        segundo = self._crear(client, admin_sistema_auth_headers, titulo_tema="Segundo módulo de la categoría")
+
+        respuesta = client.put(
+            f"{URL}/{segundo['id_contenido']}",
+            json=_payload(titulo_tema="Segundo módulo con otro título"),
+            headers=admin_sistema_auth_headers,
+        )
+
+        assert respuesta.json()["orden"] == 2
+
+    def test_crear_no_acepta_un_orden_enviado_a_mano(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ):
+        creado = self._crear(client, admin_sistema_auth_headers, orden=99)
+
+        assert creado["orden"] == 1

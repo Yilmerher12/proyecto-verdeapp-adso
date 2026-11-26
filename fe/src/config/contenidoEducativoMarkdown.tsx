@@ -1,7 +1,7 @@
 /**
  * Archivo: config/contenidoEducativoMarkdown.tsx
  * ¿Qué? Estilo de cada elemento que un Admin puede escribir en Markdown
- *       (## subtítulo, listas, negrita) dentro del cuerpo de un módulo del
+ *       (## subtítulo, listas, negrita, enlaces) dentro del cuerpo de un módulo del
  *       catálogo educativo.
  * ¿Para qué? Antes vivía solo dentro de CategoriaEducativaPage.tsx (lo que
  *           ve el Residente) — AdminContenidoEducativoPage.tsx necesita el
@@ -14,7 +14,12 @@
  *           nadie la haya revisado (sirve para rastrearlo). Las imágenes propias
  *           de las lecciones las dibuja MuroLeccion, ya revisadas con
  *           imagenPropiaSegura.
+ *           Un enlace que empieza con "/" (por ejemplo /catalogo-educativo/Residuos%20peligrosos%20del%20hogar)
+ *           es de la propia aplicación: se abre en la misma pestaña, sin recargar. Cualquier otro enlace
+ *           se abre en una pestaña nueva (issue #705: una lección puede mandar a otra categoría o a una página de ayuda).
  */
+import { Link } from "react-router-dom";
+
 export const COMPONENTES_MARKDOWN = {
   h1: (props: React.ComponentPropsWithoutRef<"h1">) => (
     <h3 className="mt-4 text-base font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
@@ -34,8 +39,15 @@ export const COMPONENTES_MARKDOWN = {
   ol: (props: React.ComponentPropsWithoutRef<"ol">) => (
     <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
   ),
-  a: (props: React.ComponentPropsWithoutRef<"a">) => (
-    <a className="link-text" target="_blank" rel="noopener noreferrer" {...props} />
-  ),
+  a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<"a">) =>
+    href && href.startsWith("/") && !href.startsWith("//") ? (
+      <Link to={href} className="link-text">
+        {children}
+      </Link>
+    ) : (
+      <a className="link-text" target="_blank" rel="noopener noreferrer" href={href} {...props}>
+        {children}
+      </a>
+    ),
   img: () => null,
 };

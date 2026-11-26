@@ -21,10 +21,14 @@ import { lunesBogota, rangoSemanaUTC } from "@/lib/dateFormat";
 import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
 import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
+import { modulosDe, primeraSinVer, rutaCategoria, rutaLeccion } from "@/lib/progresoEducativo";
 
 const CLAVE_NIVEL = { BUENA: "buena", REGULAR: "regular", DEFICIENTE: "deficiente" } as const;
 
-export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
+// ¿Qué? Issue #705: la lección recomendada es la primera de la categoría auditada que el Residente todavía no
+//       ha abierto (y el botón abre esa lección); si ya las abrió todas, el botón lleva a la lista de la
+//       categoría. Antes mostraba la más reciente de la categoría, que podía ser una que ya había visto.
+export function TuSemana({ contenido, vistos }: { contenido: ContenidoEducativo[]; vistos: Set<string> }) {
   const { t } = useTranslation();
   const [auditoria, setAuditoria] = useState<AuditoriaConjunto | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -37,7 +41,8 @@ export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
       .finally(() => setCargando(false));
   }, []);
 
-  const envoltorio = "overflow-hidden rounded-3xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card";
+  // ¿Qué? Va dentro de la tarjeta "Aprende a reciclar" (CatalogoEducativoPage), así que no lleva fondo propio.
+  const envoltorio = "overflow-hidden rounded-2xl border border-gray-100 dark:border-night-line";
 
   if (cargando) {
     return (
@@ -66,13 +71,12 @@ export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
   const esEstaSemana = lunesAuditoria === lunesBogota();
   const nombreNivel = t(`dashboards.reciclador.auditoria.niveles.${CLAVE_NIVEL[auditoria.nivel_desempeno]}`);
   const necesitaRefuerzo = auditoria.nivel_desempeno !== "BUENA";
-  const recomendado = necesitaRefuerzo
-    ? contenido.find((c) => c.modulo_categoria === auditoria.tema_educativo)
-    : undefined;
+  const leccionesCategoria = necesitaRefuerzo ? modulosDe(contenido, auditoria.tema_educativo) : [];
+  const recomendado = primeraSinVer(leccionesCategoria, vistos);
+  const categoriaCompleta = leccionesCategoria.length > 0 && !recomendado;
+  const hayRecomendacion = Boolean(recomendado) || categoriaCompleta;
   // ¿Qué? La portada de la categoría recomendada: la primera de sus módulos que tenga una.
-  const portadaRecomendada = imagenPropiaSegura(
-    recomendado && contenido.find((c) => c.modulo_categoria === recomendado.modulo_categoria && c.url_imagen)?.url_imagen
-  );
+  const portadaRecomendada = imagenPropiaSegura(leccionesCategoria.find((c) => c.url_imagen)?.url_imagen);
 
   return (
     <section aria-label={t("tuSemana.ariaLabel")} className={envoltorio}>
@@ -94,26 +98,28 @@ export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
         </p>
       </div>
 
-      {recomendado && (
+      {hayRecomendacion && (
         <Link
-          to={`/catalogo-educativo/${encodeURIComponent(recomendado.modulo_categoria)}`}
+          to={recomendado ? rutaLeccion(recomendado.id_contenido) : rutaCategoria(auditoria.tema_educativo)}
           className="flex flex-wrap items-center gap-4 rounded-b-3xl border-t border-gray-100 bg-accent-50 px-6 py-4 transition-colors hover:bg-accent-100 dark:border-night-line dark:bg-accent-300/10 dark:hover:bg-accent-300/15"
         >
           <span className="h-20 w-32 shrink-0 overflow-hidden rounded-2xl bg-white dark:bg-night-card">
             {portadaRecomendada ? (
               <img src={portadaRecomendada} alt="" className="h-full w-full object-cover" />
             ) : (
-              <IlustracionCategoria categoria={recomendado.modulo_categoria} />
+              <IlustracionCategoria categoria={auditoria.tema_educativo} />
             )}
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
               {t("tuSemana.recommended")}
             </span>
-            <span className="mt-1 block text-base font-bold text-gray-900 dark:text-white">{recomendado.titulo_tema}</span>
+            <span className="mt-1 block text-base font-bold text-gray-900 dark:text-white">
+              {recomendado ? recomendado.titulo_tema : t("tuSemana.allSeen")}
+            </span>
           </span>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-700 dark:text-accent-400">
-            {t("tuSemana.view")}
+            {recomendado ? t("tuSemana.view") : t("tuSemana.viewCategory")}
             <ChevronRight className="icon-md" aria-hidden="true" />
           </span>
         </Link>

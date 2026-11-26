@@ -382,8 +382,8 @@ def importar_contenido_educativo(connection: Connection) -> None:
         resultado = connection.execute(
             text(
                 "INSERT INTO contenido_educativo "
-                "(id_contenido, modulo_categoria, titulo_tema, cuerpo_texto, fecha_publicacion, url_video, url_guia) "
-                "SELECT :id_contenido, :modulo_categoria, :titulo_tema, :cuerpo_texto, :fecha_publicacion, "
+                "(id_contenido, modulo_categoria, orden, titulo_tema, cuerpo_texto, fecha_publicacion, url_video, url_guia) "
+                "SELECT :id_contenido, :modulo_categoria, :orden, :titulo_tema, :cuerpo_texto, :fecha_publicacion, "
                 ":url_video, :url_guia "
                 "WHERE NOT EXISTS ("
                 "SELECT 1 FROM contenido_educativo "

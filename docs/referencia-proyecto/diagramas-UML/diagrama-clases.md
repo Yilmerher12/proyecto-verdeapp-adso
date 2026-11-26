@@ -332,6 +332,7 @@ class ContenidoEducativo {
     +string titulo_tema
     +string cuerpo_texto
     +date fecha_publicacion
+    +int orden
     +string url_video
     +string url_guia
     +string url_imagen

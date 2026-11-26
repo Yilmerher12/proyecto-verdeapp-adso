@@ -11,7 +11,7 @@ from datetime import date
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session, selectinload
 
@@ -27,9 +27,25 @@ from app.services.notificaciones_helpers import crear_notificacion, residentes_d
 
 
 def listar_contenido(db: Session) -> list[ContenidoEducativo]:
-    """Devuelve todo el catálogo, del más reciente al más antiguo."""
-    stmt = select(ContenidoEducativo).order_by(ContenidoEducativo.fecha_publicacion.desc())
+    """
+    ¿Qué? Devuelve todo el catálogo agrupado por categoría y, dentro de cada una, en su orden de lectura.
+    ¿Para qué? El frontend arma "Aprende a reciclar" con este orden: no tiene que ordenar nada por su cuenta.
+    ¿Impacto? Antes salía del más reciente al más antiguo. Si dos módulos de una categoría tienen el
+              mismo orden, el más reciente va primero (desempate estable).
+    """
+    stmt = select(ContenidoEducativo).order_by(
+        ContenidoEducativo.modulo_categoria,
+        ContenidoEducativo.orden,
+        ContenidoEducativo.fecha_publicacion.desc(),
+        ContenidoEducativo.titulo_tema,
+    )
     return list(db.execute(stmt).scalars().all())
+
+
+def _siguiente_orden(db: Session, categoria: str) -> int:
+    """El número que sigue al último módulo de esa categoría (1 si la categoría es nueva)."""
+    ultimo = db.scalar(select(func.max(ContenidoEducativo.orden)).where(ContenidoEducativo.modulo_categoria == categoria))
+    return (ultimo or 0) + 1
 
 
 def obtener_contenido_o_404(db: Session, id_contenido: UUID) -> ContenidoEducativo:
@@ -51,6 +67,7 @@ def crear_contenido(db: Session, data: ContenidoEducativoCreate) -> ContenidoEdu
         url_guia=data.url_guia,
         url_imagen=data.url_imagen,
         fecha_publicacion=date.today(),
+        orden=_siguiente_orden(db, data.modulo_categoria),
     )
     db.add(contenido)
     db.commit()
@@ -62,6 +79,9 @@ def editar_contenido(
     db: Session, id_contenido: UUID, data: ContenidoEducativoUpdate
 ) -> ContenidoEducativo:
     contenido = obtener_contenido_o_404(db, id_contenido)
+    # ¿Qué? Un módulo que cambia de categoría pasa al final de la nueva (su número viejo ya no tiene sentido ahí).
+    if data.modulo_categoria != contenido.modulo_categoria:
+        contenido.orden = _siguiente_orden(db, data.modulo_categoria)
     contenido.modulo_categoria = data.modulo_categoria
     contenido.titulo_tema = data.titulo_tema
     contenido.cuerpo_texto = data.cuerpo_texto

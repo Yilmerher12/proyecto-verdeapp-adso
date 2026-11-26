@@ -50,6 +50,15 @@ class TestArchivoDeContenido:
         assert set(por_categoria) == CATEGORIAS
         assert all(cantidad >= 2 for cantidad in por_categoria.values()), por_categoria
 
+    def test_el_orden_de_cada_categoria_va_de_1_en_1_sin_huecos(self):
+        # ¿Impacto? "Anterior / Siguiente" de "Aprende a reciclar" sigue este orden (issue #705).
+        por_categoria: dict[str, list[int]] = {}
+        for modulo in _archivo():
+            por_categoria.setdefault(modulo["modulo_categoria"], []).append(modulo["orden"])
+
+        for categoria, ordenes in por_categoria.items():
+            assert sorted(ordenes) == list(range(1, len(ordenes) + 1)), categoria
+
     def test_no_hay_titulos_repetidos_dentro_de_una_categoria(self):
         # ¿Impacto? La carga decide si un módulo ya existe por categoría + título: si el archivo
         #           repite una pareja, el segundo módulo nunca se insertaría.
@@ -77,6 +86,13 @@ class TestImportarContenidoEducativo:
         seed.importar_contenido_educativo(db.connection())
 
         assert _contar(db) == len(_archivo())
+
+    def test_guarda_el_orden_del_archivo(self, db: Session):
+        seed.importar_contenido_educativo(db.connection())
+
+        esperado = {(m["modulo_categoria"], m["titulo_tema"]): m["orden"] for m in _archivo()}
+        guardado = {(c.modulo_categoria, c.titulo_tema): c.orden for c in db.scalars(select(ContenidoEducativo))}
+        assert guardado == esperado
 
     def test_correrla_dos_veces_no_duplica(self, db: Session):
         seed.importar_contenido_educativo(db.connection())

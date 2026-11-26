@@ -1228,7 +1228,26 @@
     "videoCount_one": "{{count}} video",
     "videoCount_other": "{{count}} videos",
     "guideCount_one": "{{count}} guía",
-    "guideCount_other": "{{count}} guías"
+    "guideCount_other": "{{count}} guías",
+    "seenCount_one": "{{count}} vista",
+    "seenCount_other": "{{count}} vistas",
+    "progress": "{{vistos}} de {{total}} lecciones vistas",
+    "notStarted": "Sin empezar",
+    "complete": "Categoría completa",
+    "start": "Empezar: {{titulo}}",
+    "continue": "Continuar: {{titulo}}",
+    "nextHere": "Sigue por aquí",
+    "withVideo": "Con video",
+    "phrases": {
+      "separacion": "Qué va en cada bolsa y a qué hora sacarla",
+      "preparacion": "Cómo dejar el papel, el plástico y el vidrio para que se reciclen",
+      "economiaCircular": "Qué pasa con tu bolsa blanca y quién la recoge",
+      "consumo": "Menos basura en casa y los 10 mandamientos de cero desechos",
+      "ecopuntos": "Dónde llevar muebles, colchones y escombros",
+      "escombros": "Qué hacer con los escombros de una obra o remodelación",
+      "peligrosos": "Pilas, bombillas, medicamentos, aceite y más",
+      "aparatos": "Qué hacer con computadores, neveras, baterías y llantas"
+    }
   },
   "tuSemana": {
     "ariaLabel": "Tu semana",
@@ -1239,11 +1258,20 @@
     "needsReinforcement": "Por eso te recomendamos esta lección.",
     "keepItUp": "¡Sigue así! Tu conjunto separa bien este tema.",
     "recommended": "Recomendado para ti",
-    "view": "Ver lección"
+    "view": "Ver lección",
+    "allSeen": "Ya viste todas las lecciones de esta categoría",
+    "viewCategory": "Ver categoría"
   },
   "leccionMuro": {
-    "about": "De qué trata",
     "openGuide": "Abrir la guía oficial"
+  },
+  "leccionEducativa": {
+    "breadcrumb": "Ruta de navegación",
+    "neighbours": "Anterior y siguiente lección",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "unavailable": "Esta lección ya no está disponible.",
+    "loadError": "No se pudo cargar la lección."
   },
   "adminContenidoEducativo": {
     "title": "Contenido educativo",
@@ -1437,9 +1465,9 @@
       "updates": "Se actualiza al escribir",
       "tabsLabel": "Qué parte ver",
       "tabLesson": "Lección",
-      "tabCatalog": "Tarjeta del catálogo",
-      "catalogHint": "Así se ve este módulo en la lista de «Aprende a reciclar».",
-      "catalogNoCover": "Sin imagen de portada se usa el dibujo de la categoría. Sube una portada para verla aquí.",
+      "tabCatalog": "Fila de la lista",
+      "catalogHint": "Así se ve este módulo en la lista de su categoría. La portada se ve arriba de la lección (si no tiene video) y en la tarjeta de la categoría.",
+      "catalogNoCover": "Así se ve este módulo en la lista de su categoría. Sin portada, la lección no lleva imagen arriba si no tiene video.",
       "categoryPlaceholder": "Categoría",
       "titlePlaceholder": "Aquí verás el título",
       "bodyPlaceholder": "Aquí verás el contenido tal como lo leerá el Residente."

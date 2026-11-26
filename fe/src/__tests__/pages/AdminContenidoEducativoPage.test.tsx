@@ -55,6 +55,7 @@ const moduloExistente: ContenidoEducativo = {
   url_guia: null,
   url_imagen: null,
   fecha_publicacion: "2026-08-18",
+  orden: 1,
 };
 
 const califMalo: AuditoriaAdmin = {
@@ -736,7 +737,7 @@ describe("AdminContenidoEducativoPage", () => {
         expect(screen.getByText(/Cada párrafo, separado por una línea en blanco, es una tarjeta del muro/)).toBeInTheDocument();
       });
 
-      it("la vista previa dibuja el muro: 'De qué trata' y una tarjeta con su título", async () => {
+      it("la vista previa dibuja la lección: la introducción y una sección con su título", async () => {
         const user = userEvent.setup({ delay: null });
         await abrirFormularioNuevo(user);
 
@@ -745,8 +746,10 @@ describe("AdminContenidoEducativoPage", () => {
           "Los tres colores de bolsa se usan en toda la ciudad.\n\nBolsa blanca: material limpio y seco."
         );
 
-        expect(await screen.findByText("De qué trata")).toBeInTheDocument();
-        expect(screen.getByRole("heading", { level: 3, name: "Bolsa blanca" })).toBeInTheDocument();
+        // ¿Qué? La introducción también sale en el recuadro "Así se dividirá tu texto": se busca dentro de la lección.
+        const leccion = await screen.findByRole("article");
+        expect(within(leccion).getByText("Los tres colores de bolsa se usan en toda la ciudad.")).toBeInTheDocument();
+        expect(within(leccion).getByRole("heading", { level: 3, name: "Bolsa blanca" })).toBeInTheDocument();
       });
 
       it("una imagen escrita en el texto no se pinta en la vista previa", async () => {
@@ -891,9 +894,9 @@ describe("AdminContenidoEducativoPage", () => {
       expect(screen.getByRole("radio", { name: "Nueva" })).toHaveAttribute("aria-checked", "true");
       expect(screen.getByText(/también será un tema que los recicladores podrán calificar/)).toBeInTheDocument();
       await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "Compostaje en casa");
-      // La categoría escrita se ve en la "Tarjeta del catálogo" de la vista previa.
-      await user.click(screen.getByRole("tab", { name: "Tarjeta del catálogo" }));
-      expect(within(screen.getByRole("tabpanel", { name: "Tarjeta del catálogo" })).getByText("Compostaje en casa")).toBeInTheDocument();
+      // La categoría escrita se ve en la "Fila de la lista" de la vista previa.
+      await user.click(screen.getByRole("tab", { name: "Fila de la lista" }));
+      expect(within(screen.getByRole("tabpanel", { name: "Fila de la lista" })).getByText("Compostaje en casa")).toBeInTheDocument();
     });
 
     describe("editor de módulos (issue #620)", () => {
@@ -1043,7 +1046,7 @@ describe("AdminContenidoEducativoPage", () => {
         expect(within(recuadro).getByText(/Gracias por separar bien/)).toBeInTheDocument();
       });
 
-      it("la vista previa tiene dos pestañas: 'Lección' (el muro) y 'Tarjeta del catálogo'", async () => {
+      it("la vista previa tiene dos pestañas: 'Lección' y 'Fila de la lista'", async () => {
         const user = userEvent.setup({ delay: null });
         await abrirNuevo(user);
         await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema para la vista previa");
@@ -1051,10 +1054,10 @@ describe("AdminContenidoEducativoPage", () => {
         expect(screen.getByRole("tab", { name: "Lección" })).toHaveAttribute("aria-selected", "true");
         expect(screen.getByText("Se actualiza al escribir")).toBeInTheDocument();
 
-        await user.click(screen.getByRole("tab", { name: "Tarjeta del catálogo" }));
-        const panel = screen.getByRole("tabpanel", { name: "Tarjeta del catálogo" });
+        await user.click(screen.getByRole("tab", { name: "Fila de la lista" }));
+        const panel = screen.getByRole("tabpanel", { name: "Fila de la lista" });
         expect(within(panel).getByText("Tema para la vista previa")).toBeInTheDocument();
-        expect(within(panel).getByText(/Sin imagen de portada se usa el dibujo de la categoría/)).toBeInTheDocument();
+        expect(within(panel).getByText(/Así se ve este módulo en la lista de su categoría/)).toBeInTheDocument();
       });
 
       it("en celular se alterna entre 'Editar' y 'Vista previa'", async () => {

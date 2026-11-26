@@ -1,28 +1,35 @@
-import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Check, ChevronRight, FileText } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Esqueleto } from "@/components/ui/Esqueleto";
-import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
-import { MuroLeccion } from "@/components/educativo/MuroLeccion";
-import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
-import { listarContenido, marcarVistos, type ContenidoEducativo } from "@/lib/contenidoEducativoApi";
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
+import { FRASE_CATEGORIA, ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
+import { useAuth } from "@/hooks/useAuth";
+import { listarContenido, listarVistos, type ContenidoEducativo } from "@/lib/contenidoEducativoApi";
+import { partirEnTarjetas } from "@/lib/muroLeccion";
+import {
+  agruparPorCategoria,
+  modulosDe,
+  primeraSinVer,
+  progresoDe,
+  RUTA_CATALOGO,
+  rutaCategoria,
+  rutaLeccion,
+} from "@/lib/progresoEducativo";
 
 /**
- * ¿Qué? Una categoría de "Aprende a reciclar" como un muro: cada lección con su
- *       video, "De qué trata" y una tarjeta por párrafo, y al final otras
+ * ¿Qué? Una categoría de "Aprende a reciclar" como una lista de sus lecciones, en una sola tarjeta: arriba su
+ *       cabecera (ícono, nombre, frase, avance y el botón "Empezar" o "Continuar") y debajo una fila por
+ *       lección, con su número o su marca de visto, su título y una línea de resumen. Al final, otras
  *       categorías para seguir aprendiendo.
- * ¿Para qué? Antes era una lista de módulos con el texto seguido, sin imágenes y
- *           con el espacio muy apretado. Aquí también se deja constancia de que
- *           el Residente abrió la lección ("Visto").
- * ¿Impacto? Al cargar, los módulos de la categoría se marcan como vistos en el
- *           servidor. Si esa llamada falla, la página se ve igual: solo no queda
- *           la marca, y se reintenta la próxima vez que abra la categoría. El
- *           texto de cada módulo se parte en tarjetas con lib/muroLeccion.ts y se
- *           dibuja con MuroLeccion.
+ * ¿Para qué? Antes esta página apilaba todas las lecciones de la categoría y las marcaba como vistas al
+ *           cargar. Ahora cada lección vive en su propia página (LeccionEducativaPage) y esta solo ayuda a
+ *           elegir cuál abrir (issue #705, docs/gestion-proyecto/rediseno-aprende-a-reciclar.md).
+ * ¿Impacto? Entrar aquí ya no marca nada como visto. El avance sale de las lecciones que el Residente abrió
+ *           (listarVistos); si esa consulta falla, la lista se ve igual, sin marcas. El orden de las filas es
+ *           el orden de lectura que guarda el servidor.
  */
 export function CategoriaEducativaPage() {
   const { t } = useTranslation();
@@ -30,107 +37,162 @@ export function CategoriaEducativaPage() {
   const categoriaDecodificada = decodeURIComponent(categoria ?? "");
   const { user } = useAuth();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
+  const [vistos, setVistos] = useState<Set<string>>(new Set());
   const [cargando, setCargando] = useState(true);
-  const [visto, setVisto] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     listarContenido()
-      .then((lista) => {
-        setContenido(lista);
-        const ids = lista.filter((c) => c.modulo_categoria === categoriaDecodificada).map((c) => c.id_contenido);
-        if (ids.length === 0) return;
-        marcarVistos(ids)
-          .then(() => setVisto(true))
-          .catch(() => setVisto(false));
-      })
+      .then(setContenido)
+      .catch(() => setContenido([]))
       .finally(() => setCargando(false));
+    listarVistos()
+      .then((ids) => setVistos(new Set(ids)))
+      .catch(() => setVistos(new Set()));
   }, [user, categoriaDecodificada]);
 
-  const temas = contenido.filter((c) => c.modulo_categoria === categoriaDecodificada);
+  const lecciones = useMemo(() => modulosDe(contenido, categoriaDecodificada), [contenido, categoriaDecodificada]);
+  const progreso = progresoDe(lecciones, vistos);
+  const siguiente = primeraSinVer(lecciones, vistos);
+  const porcentaje = progreso.total ? Math.round((progreso.vistos / progreso.total) * 100) : 0;
+  const Icono = ICONOS_CATEGORIAS[categoriaDecodificada] ?? ICONO_CATEGORIA_DEFAULT;
+  const claveFrase = FRASE_CATEGORIA[categoriaDecodificada];
+
+  // ¿Qué? Las dos categorías que siguen a esta en el orden del catálogo (dando la vuelta al final).
   const otras = useMemo(() => {
-    const nombres = Array.from(new Set(contenido.map((c) => c.modulo_categoria))).filter(
-      (n) => n !== categoriaDecodificada
-    );
-    return nombres.slice(0, 2).map((nombre) => ({ nombre, modulo: contenido.find((c) => c.modulo_categoria === nombre)! }));
+    const todas = agruparPorCategoria(contenido).map((c) => c.nombre);
+    const i = todas.indexOf(categoriaDecodificada);
+    if (i === -1) return todas.slice(0, 2);
+    return [1, 2].map((paso) => todas[(i + paso) % todas.length]).filter((n, k, arr) => n !== categoriaDecodificada && arr.indexOf(n) === k);
   }, [contenido, categoriaDecodificada]);
 
-  const conVideo = temas.filter((c) => c.url_video).length;
-  const conGuia = temas.filter((c) => c.url_guia).length;
-
   return (
-    <div className={`${ANCHO_PAGINA.normal} space-y-9 pt-6 pb-12`}>
-      <Link
-        to="/catalogo-educativo"
-        className="link-text touch-target-h flex w-fit items-center gap-1.5 text-sm font-semibold"
-      >
-        <ArrowLeft className="icon-sm" aria-hidden="true" />
-        {t("categoriaEducativa.back")}
-      </Link>
-
-      {/* ¿Qué? El título de la categoría y el de "Sigue aprendiendo" van en una tarjeta (ver CatalogoEducativoPage). */}
-      <header className="space-y-3 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card">
-        <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
-          {categoriaDecodificada}
-        </span>
-        <h1 className="max-w-3xl text-2xl font-bold leading-tight text-gray-900 dark:text-white">
-          {temas.length === 1 ? temas[0].titulo_tema : categoriaDecodificada}
-        </h1>
-        {temas.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-            {visto && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-                <Check className="icon-sm" aria-hidden="true" />
-                {t("categoriaEducativa.seen")}
-              </span>
-            )}
-            <span>
-              {t("categoriaEducativa.lessonCount", { count: temas.length })} ·{" "}
-              {t("categoriaEducativa.videoCount", { count: conVideo })} ·{" "}
-              {t("categoriaEducativa.guideCount", { count: conGuia })}
-            </span>
-          </div>
-        )}
-      </header>
-
+    <div className={`${ANCHO_PAGINA.lectura} space-y-6 pt-6 pb-12`}>
       {cargando && <Esqueleto mensaje={t("common.loading")} variante="bloque" alto="h-96" />}
 
-      {!cargando && temas.length === 0 && (
-        <EmptyState icon={FileText} message={t("categoriaEducativa.emptyForCategory")} />
+      {!cargando && lecciones.length === 0 && (
+        <div className="space-y-4">
+          <EmptyState icon={FileText} message={t("categoriaEducativa.emptyForCategory")} />
+          <Link to={RUTA_CATALOGO} className="touch-target-h mx-auto flex w-fit items-center gap-2 rounded-xl bg-accent-700 px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200">
+            <ArrowLeft className="icon-sm" aria-hidden="true" />
+            {t("categoriaEducativa.back")}
+          </Link>
+        </div>
       )}
 
-      <div className="space-y-14">
-        {temas.map((item) => (
-          <MuroLeccion key={item.id_contenido} modulo={item} mostrarTitulo={temas.length > 1} />
-        ))}
-      </div>
+      {lecciones.length > 0 && (
+        <section className="overflow-hidden rounded-3xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card" aria-labelledby="titulo-categoria">
+          <header className="space-y-4 p-6 sm:p-8">
+            <Link to={RUTA_CATALOGO} className="link-text touch-target-h flex w-fit items-center gap-1.5 text-sm font-semibold">
+              <ArrowLeft className="icon-sm" aria-hidden="true" />
+              {t("categoriaEducativa.back")}
+            </Link>
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400" aria-hidden="true">
+              <Icono className="icon-md" />
+            </span>
+            <div className="space-y-1">
+              <h1 id="titulo-categoria" className="text-2xl font-bold leading-snug text-gray-900 dark:text-white">
+                {categoriaDecodificada}
+              </h1>
+              {claveFrase && <p className="text-base text-gray-600 dark:text-gray-300">{t(claveFrase)}</p>}
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {t("categoriaEducativa.lessonCount", { count: progreso.total })} · {t("categoriaEducativa.seenCount", { count: progreso.vistos })}
+            </p>
+            <div
+              className="h-2.5 overflow-hidden rounded-full bg-accent-50 dark:bg-accent-300/10"
+              role="progressbar"
+              aria-valuenow={progreso.vistos}
+              aria-valuemin={0}
+              aria-valuemax={progreso.total}
+              aria-label={t("categoriaEducativa.progress", { vistos: progreso.vistos, total: progreso.total })}
+            >
+              <div className="h-full bg-accent-600 dark:bg-accent-300" style={{ width: `${porcentaje}%` }} />
+            </div>
+            {progreso.estado === "completa" ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 text-sm font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                <Check className="icon-sm" aria-hidden="true" />
+                {t("categoriaEducativa.complete")}
+              </span>
+            ) : (
+              siguiente && (
+                <Link
+                  to={rutaLeccion(siguiente.id_contenido)}
+                  className="touch-target-h inline-flex w-fit max-w-full items-center gap-2 rounded-xl bg-accent-700 px-5 py-2 text-left text-sm font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+                >
+                  {t(progreso.estado === "sinEmpezar" ? "categoriaEducativa.start" : "categoriaEducativa.continue", { titulo: siguiente.titulo_tema })}
+                  <ChevronRight className="icon-sm shrink-0" aria-hidden="true" />
+                </Link>
+              )
+            )}
+          </header>
 
-      {otras.length > 0 && (
-        <section aria-labelledby="titulo-sigue" className="space-y-5">
-          <h2 id="titulo-sigue" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
+          <ol className="border-t border-gray-100 dark:border-night-line">
+            {lecciones.map((leccion, i) => {
+              const visto = vistos.has(leccion.id_contenido);
+              const resumen = partirEnTarjetas(leccion.cuerpo_texto).introduccion;
+              const esSiguiente = siguiente?.id_contenido === leccion.id_contenido;
+              return (
+                <li key={leccion.id_contenido} className="border-b border-gray-100 p-2 last:border-b-0 dark:border-night-line sm:px-4">
+                  <Link
+                    to={rutaLeccion(leccion.id_contenido)}
+                    className="flex items-center gap-4 rounded-2xl px-4 py-3 transition-colors hover:bg-accent-50 dark:hover:bg-accent-300/10"
+                  >
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                        visto
+                          ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                          : "border border-edge text-gray-600 dark:border-night-edge dark:text-gray-300"
+                      }`}
+                    >
+                      {visto ? <Check className="icon-sm" aria-label={t("categoriaEducativa.seen")} /> : i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1 space-y-1">
+                      {esSiguiente && progreso.estado !== "completa" && (
+                        <span className="inline-block rounded-full bg-accent-50 px-2.5 py-0.5 text-xs font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                          {t("categoriaEducativa.nextHere")}
+                        </span>
+                      )}
+                      <span className="block text-base font-bold leading-snug text-gray-900 dark:text-white">{leccion.titulo_tema}</span>
+                      {resumen && <span className="line-clamp-2 block text-sm text-gray-600 dark:text-gray-300">{resumen}</span>}
+                      {leccion.url_video && (
+                        <span className="inline-block rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-line dark:text-gray-300">
+                          {t("categoriaEducativa.withVideo")}
+                        </span>
+                      )}
+                    </span>
+                    <ChevronRight className="icon-md shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
+      {lecciones.length > 0 && otras.length > 0 && (
+        <section aria-labelledby="titulo-sigue" className="space-y-4 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card sm:p-8">
+          <h2 id="titulo-sigue" className="text-lg font-bold text-gray-900 dark:text-white">
             {t("categoriaEducativa.keepLearning")}
           </h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {otras.map(({ nombre, modulo }) => {
-              const portada = imagenPropiaSegura(contenido.find((c) => c.modulo_categoria === nombre && c.url_imagen)?.url_imagen);
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {otras.map((nombre) => {
+              const OtroIcono = ICONOS_CATEGORIAS[nombre] ?? ICONO_CATEGORIA_DEFAULT;
+              const fraseOtra = FRASE_CATEGORIA[nombre];
               return (
                 <Link
                   key={nombre}
-                  to={`/catalogo-educativo/${encodeURIComponent(nombre)}`}
-                  className="group flex overflow-hidden rounded-3xl border border-gray-100 bg-white transition-transform hover:-translate-y-0.5 dark:border-night-line dark:bg-night-card"
+                  to={rutaCategoria(nombre)}
+                  className="group flex items-center gap-3 rounded-2xl border border-gray-100 p-4 transition-colors hover:border-accent-300 dark:border-night-line dark:hover:border-accent-400"
                 >
-                  <span className="block w-36 shrink-0 bg-accent-50 dark:bg-accent-300/10" aria-hidden="true">
-                    {portada ? (
-                      <img src={portada} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <IlustracionCategoria categoria={nombre} />
-                    )}
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400" aria-hidden="true">
+                    <OtroIcono className="icon-md" />
                   </span>
-                  <span className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 p-5">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{nombre}</span>
-                    <span className="text-base font-bold leading-snug text-gray-900 dark:text-white">{modulo.titulo_tema}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-gray-900 dark:text-white">{nombre}</span>
+                    {fraseOtra && <span className="block text-xs text-gray-600 dark:text-gray-300">{t(fraseOtra)}</span>}
                   </span>
-                  <ChevronRight className="icon-md my-auto mr-4 shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
+                  <ChevronRight className="icon-md shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
                 </Link>
               );
             })}

@@ -88,3 +88,36 @@ export const CATEGORIAS_NO_AUDITABLES = new Set<string>([
   "Economía circular y aprovechamiento",
   "Aparatos, llantas y baterías",
 ]);
+
+// ¿Qué? El orden en que "Aprende a reciclar" muestra las categorías: primero lo que se entrega al reciclador
+//       por el SHUT (grupo A de docs/gestion-proyecto/estructura-contenido-educativo.md) y después lo que
+//       no va en bolsas (grupo B).
+// ¿Para qué? El servidor ordena el catálogo por nombre de categoría y por orden de lectura dentro de cada
+//           una; el orden de las categorías entre sí es de presentación y por eso vive aquí.
+// ¿Impacto? Una categoría que no esté en esta lista (la creó el Administrador del Sistema) se muestra
+//           después de las de la lista, por orden alfabético.
+export const ORDEN_CATEGORIAS: string[] = [
+  "Separación en la fuente y código de colores",
+  "Tipos de residuos y su preparación",
+  "Economía circular y aprovechamiento",
+  "Marco distrital y consumo responsable",
+  "Puntos limpios y Ecopuntos",
+  "Residuos de construcción y demolición",
+  "Residuos peligrosos del hogar",
+  "Aparatos, llantas y baterías",
+];
+
+// ¿Qué? La clave de la frase que explica de qué trata cada categoría (issue #705), en los dos idiomas.
+// ¿Para qué? Los nombres como "Marco distrital y consumo responsable" son técnicos; la frase le dice a
+//           cualquiera qué va a encontrar adentro.
+// ¿Impacto? Una categoría nueva no tiene frase y su tarjeta se ve igual, sin esa línea.
+export const FRASE_CATEGORIA: Record<string, string> = {
+  "Separación en la fuente y código de colores": "categoriaEducativa.phrases.separacion",
+  "Tipos de residuos y su preparación": "categoriaEducativa.phrases.preparacion",
+  "Economía circular y aprovechamiento": "categoriaEducativa.phrases.economiaCircular",
+  "Marco distrital y consumo responsable": "categoriaEducativa.phrases.consumo",
+  "Puntos limpios y Ecopuntos": "categoriaEducativa.phrases.ecopuntos",
+  "Residuos de construcción y demolición": "categoriaEducativa.phrases.escombros",
+  "Residuos peligrosos del hogar": "categoriaEducativa.phrases.peligrosos",
+  "Aparatos, llantas y baterías": "categoriaEducativa.phrases.aparatos",
+};

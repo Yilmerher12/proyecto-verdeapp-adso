@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Date
+from sqlalchemy import Column, Integer, String, Text, Date, text
 from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
 from app.utils.ids import generar_uuid4
@@ -11,6 +11,14 @@ class ContenidoEducativo(Base):
     titulo_tema = Column(String(255), nullable=False)
     cuerpo_texto = Column(Text, nullable=False)
     fecha_publicacion = Column(Date, nullable=False)
+    # ¿Qué? Posición del módulo dentro de su categoría: 1, 2, 3... en el orden en que se lee.
+    # ¿Para qué? Antes el orden salía de fecha_publicacion, que significa "cuándo se publicó". Con
+    #           esta columna, "Anterior / Siguiente" y "la primera lección sin ver" de "Aprende a
+    #           reciclar" (issue #705) no dependen de una fecha.
+    # ¿Impacto? Al crear un módulo el servicio le pone el siguiente número de su categoría (queda al
+    #           final); no hay todavía una pantalla para reordenar. No es única: dos módulos con el
+    #           mismo número se desempatan por fecha, así que reordenar a futuro no choca con nada.
+    orden = Column(Integer, nullable=False, default=0, server_default=text("0"))
     # ¿Qué? Link al video (YouTube) y a la guía de apoyo (PDF u otro documento).
     # ¿Para qué? Separados de cuerpo_texto para que el frontend pueda incrustar
     #           el reproductor de video y mostrar un botón de guía, en vez de
