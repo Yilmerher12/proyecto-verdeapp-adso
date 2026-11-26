@@ -113,6 +113,9 @@ class ContenidoEducativoUpdate(_ContenidoEducativoEntrada):
 class ContenidoEducativoResponse(ContenidoEducativoBase):
     id_contenido: UUID
     fecha_publicacion: date
+    # ¿Qué? Posición del módulo dentro de su categoría (1 es el primero que se lee).
+    # ¿Impacto? Solo sale en las respuestas: crear o editar no la aceptan, la asigna el servicio.
+    orden: int
 
     model_config = {"from_attributes": True}
 
