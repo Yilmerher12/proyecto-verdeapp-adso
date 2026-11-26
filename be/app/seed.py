@@ -372,7 +372,9 @@ def importar_contenido_educativo(connection: Connection) -> None:
     ¿Impacto? Se puede correr las veces que haga falta sin duplicar nada y sin pisar el texto de
               un módulo que el Admin del Sistema haya editado. Un módulo que el Admin borre o al
               que le cambie el título vuelve a aparecer en la próxima corrida (solo pasa en
-              desarrollo: el Dockerfile no corre el seed en producción).
+              desarrollo: el Dockerfile no corre el seed en producción). Tampoco borra nada: un
+              módulo que se retire del archivo sigue en una base ya sembrada hasta que se
+              reinicie el volumen de Docker.
     """
     modulos = json.loads(CONTENIDO_EDUCATIVO_JSON.read_text(encoding="utf-8"))
     nuevos = 0

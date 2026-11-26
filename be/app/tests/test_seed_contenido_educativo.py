@@ -66,10 +66,10 @@ class TestArchivoDeContenido:
                 assert modulo["url_video"].startswith("https://"), modulo["titulo_tema"]
 
     def test_los_modulos_nuevos_citan_su_fuente(self):
-        # ¿Impacto? El issue #519 exige "cada afirmación lleva su fuente": los 16 módulos
-        #           nuevos terminan con un párrafo "Fuente: ...".
-        con_fuente = [m for m in _archivo() if "\n\nFuente: " in m["cuerpo_texto"]]
-        assert len(con_fuente) >= 16
+        # ¿Impacto? El issue #519 exige "cada afirmación lleva su fuente": todos los módulos del
+        #           archivo terminan con un párrafo "Fuente: ...".
+        sin_fuente = [m["titulo_tema"] for m in _archivo() if "\n\nFuente: " not in m["cuerpo_texto"]]
+        assert sin_fuente == []
 
 
 class TestImportarContenidoEducativo:

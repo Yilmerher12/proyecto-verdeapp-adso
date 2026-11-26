@@ -76,7 +76,7 @@ El ambiente de pruebas está separado del de desarrollo: una prueba nunca toca l
 |---|---|---|
 | Base de datos | `verdeapp_db`, en el contenedor `verde_db` | `verdeapp_test_db`, en su propio contenedor `verde_db_test` (puerto 5434, sin volumen) |
 | Cómo se arma | Migraciones de Alembic y `app.seed` | `pytest` vacía la base, corre `alembic upgrade head` al empezar la sesión (las mismas migraciones de la base real) y la vacía al terminar; cada prueba corre dentro de una transacción que se revierte al final |
-| Datos | Cuentas de prueba, 22 módulos educativos, conjuntos y ECA reales (siembra) | Fixtures de `be/app/tests/conftest.py` (un usuario por rol y sus cabeceras de sesión) |
+| Datos | Cuentas de prueba, 28 módulos educativos, conjuntos y ECA reales (siembra) | Fixtures de `be/app/tests/conftest.py` (un usuario por rol y sus cabeceras de sesión) |
 | Correo | Mailpit (`verde_mailpit`): captura los correos, no salen a internet | Con el `.env.example` (`SMTP_HOST` apunta a Mailpit) los correos de las pruebas quedan en Mailpit. En el CI no hay proveedor de correo configurado y `be/app/utils/email.py` solo registra que no se envió |
 | CI (GitHub Actions) | No aplica | PostgreSQL 17 temporal en cada ejecución, con la misma base `verdeapp_test_db` y sus propias variables de entorno (la `SECRET_KEY` del CI no es una clave real) |
 | E2E | Frontend, backend y base de desarrollo encendidos | Playwright levanta el frontend solo; usa las cuentas de prueba de `e2e/.env` |
