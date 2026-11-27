@@ -41,15 +41,82 @@ describe("api/auth con MSW", () => {
   it("loginUser devuelve el mensaje cuando el servidor responde 200", async () => {
     servidor.use(
       http.post(`${API_BASE_URL}/api/v1/auth/login`, () =>
-        HttpResponse.json({ message: "Login exitoso" }),
+        HttpResponse.json({ message: "Sesión iniciada correctamente" }),
       ),
     );
 
     const respuesta = await loginUser({ email: "ana@correo.com", password: "Clave123!" });
 
-    expect(respuesta).toEqual({ message: "Login exitoso" });
+    expect(respuesta).toEqual({ message: "Sesión iniciada correctamente" });
   });
 
+  // ¿Qué? Login con la clave incorrecta: el backend real responde 401 con { detail: "<texto>" } (el
+  //       detail es un texto, no una lista), capturado con curl sobre la BD de pruebas en la semana 6.
+  // ¿Para qué? Comprobar que loginUser rechaza la promesa y que axios.ts copia ese detail en
+  //           error.message, que es lo que la pantalla de login muestra al usuario.
+  // ¿Impacto? Tipo de doble: stub de red (MSW) con una respuesta REAL. Si el backend cambia el texto,
+  //           hay que volver a capturarlo. Es el mismo texto para clave mala y correo inexistente.
+  it("loginUser rechaza con el texto del servidor cuando responde 401", async () => {
+    // Arrange
+    servidor.use(
+      http.post(`${API_BASE_URL}/api/v1/auth/login`, () =>
+        HttpResponse.json(
+          {
+            detail:
+              "Credenciales incorrectas. Si fallaste varias veces, espera 15 minutos e intenta de nuevo.",
+          },
+          { status: 401 },
+        ),
+      ),
+    );
+
+    // Act
+    const intento = loginUser({ email: "ana@correo.com", password: "ClaveIncorrecta12!" });
+
+    // Assert
+    await expect(intento).rejects.toMatchObject({
+      response: { status: 401 },
+      message:
+        "Credenciales incorrectas. Si fallaste varias veces, espera 15 minutos e intenta de nuevo.",
+    });
+  });
+
+  // ¿Qué? Login con una cuenta que todavía no verificó su correo: el backend real responde 403 con
+  //       { detail: "<texto>" }, capturado con curl sobre la BD de pruebas en la semana 6.
+  // ¿Para qué? Comprobar que loginUser rechaza la promesa y que el texto llega en error.message, para
+  //           que la pantalla le diga a la persona que debe revisar su correo.
+  // ¿Impacto? Tipo de doble: stub de red (MSW) con una respuesta REAL. El 403 solo aparece si la clave
+  //           es correcta; con clave mala el backend responde 401 y no revela que la cuenta existe.
+  it("loginUser rechaza con el texto del servidor cuando responde 403 (sin verificar)", async () => {
+    // Arrange
+    servidor.use(
+      http.post(`${API_BASE_URL}/api/v1/auth/login`, () =>
+        HttpResponse.json(
+          {
+            detail: "Tu cuenta no ha sido verificada aún. Revisa tu correo para activarla.",
+          },
+          { status: 403 },
+        ),
+      ),
+    );
+
+    // Act
+    const intento = loginUser({
+      email: "ananoverificada@correo.com",
+      password: "ClaveCorrecta1234!",
+    });
+
+    // Assert
+    await expect(intento).rejects.toMatchObject({
+      response: { status: 403 },
+      message: "Tu cuenta no ha sido verificada aún. Revisa tu correo para activarla.",
+    });
+  });
+
+  // ¿Qué? Caso SIMULADO: un 500 no se puede provocar en el backend real sin romperlo, así que el cuerpo
+  //       { detail: { code: "boom" } } es inventado (no se sabe cómo responde el backend en un 500).
+  // ¿Para qué? Comprobar que registerUser no se traga el error del servidor y lo deja pasar a la pantalla.
+  // ¿Impacto? Tipo de doble: stub de red (MSW). Solo el estado 500 es realista, no el cuerpo.
   it("registerUser rechaza la promesa cuando el servidor responde 500", async () => {
     servidor.use(
       http.post(`${API_BASE_URL}/api/v1/auth/register`, () =>
@@ -62,24 +129,87 @@ describe("api/auth con MSW", () => {
     ).rejects.toMatchObject({ response: { status: 500 } });
   });
 
-  it("changePassword une los mensajes de un 422 de validación en error.message", async () => {
+  // ¿Qué? Registro con una contraseña débil: el backend real responde 422 con { detail: [lista] }, un
+  //       error por campo, y el msg de una contraseña empieza con "Value error, " (capturado con curl
+  //       sobre la BD de pruebas, semana 6).
+  // ¿Para qué? Comprobar que registerUser rechaza la promesa y que axios.ts toma el msg de esa lista y lo
+  //           deja en error.message, que es lo que verá la persona en el formulario.
+  // ¿Impacto? Tipo de doble: stub de red (MSW) con una respuesta REAL. El backend también repite la
+  //           contraseña en el campo "input" de este error (observación anotada en el PR).
+  it("registerUser rechaza con el mensaje del servidor cuando la contraseña es débil (422)", async () => {
+    // Arrange
     servidor.use(
-      http.post(`${API_BASE_URL}/api/v1/auth/change-password`, () =>
+      http.post(`${API_BASE_URL}/api/v1/auth/register`, () =>
         HttpResponse.json(
-          { detail: [{ msg: "Contraseña muy corta" }, { msg: "Falta un número" }] },
+          {
+            detail: [
+              {
+                type: "value_error",
+                loc: ["body", "password"],
+                msg: "Value error, La contraseña debe contener al menos un número",
+                input: "ClaveSinNumero",
+                ctx: { error: {} },
+              },
+            ],
+          },
           { status: 422 },
         ),
       ),
     );
 
-    await expect(
-      changePassword({ current_password: "vieja", new_password: "a" } as never),
-    ).rejects.toMatchObject({
+    // Act
+    const intento = registerUser({ email: "ana@correo.com", password: "clavedebil" } as never);
+
+    // Assert
+    await expect(intento).rejects.toMatchObject({
       response: { status: 422 },
-      message: "Contraseña muy corta. Falta un número",
+      message: "Value error, La contraseña debe contener al menos un número",
     });
   });
 
+  // ¿Qué? El 422 de este handler es copia de lo que el backend real respondió (capturado con curl sobre
+  //       la BD de pruebas, semana 6) al mandar { new_password: "corta" } sin current_password.
+  // ¿Para qué? Antes el handler traía dos mensajes inventados ("Contraseña muy corta", "Falta un número")
+  //           para el mismo campo, algo que el backend nunca responde: Pydantic da UN error por campo, y
+  //           los mensajes de contraseña empiezan con "Value error, ".
+  // ¿Impacto? Tipo de doble: stub de red (MSW). Sigue probando que axios.ts une los mensajes de un 422.
+  it("changePassword une los mensajes de un 422 de validación en error.message", async () => {
+    servidor.use(
+      http.post(`${API_BASE_URL}/api/v1/auth/change-password`, () =>
+        HttpResponse.json(
+          {
+            detail: [
+              {
+                type: "missing",
+                loc: ["body", "current_password"],
+                msg: "Field required",
+                input: { new_password: "corta" },
+              },
+              {
+                type: "value_error",
+                loc: ["body", "new_password"],
+                msg: "Value error, La contraseña debe tener al menos 8 caracteres",
+                input: "corta",
+                ctx: { error: {} },
+              },
+            ],
+          },
+          { status: 422 },
+        ),
+      ),
+    );
+
+    await expect(changePassword({ new_password: "corta" } as never)).rejects.toMatchObject({
+      response: { status: 422 },
+      message: "Field required. Value error, La contraseña debe tener al menos 8 caracteres",
+    });
+  });
+
+  // ¿Qué? Caso SIMULADO y el más débil del archivo: el backend real nunca responde HTML, y un servidor
+  //       intermedio caído respondería con un estado de error (502), no con 200.
+  // ¿Para qué? Comprobar que getMe devuelve el texto tal cual y no se rompe si el cuerpo no es JSON.
+  // ¿Impacto? Tipo de doble: stub de red (MSW). Si se borra, verificar antes que no baje el umbral de
+  //           cobertura del frontend.
   it("getMe devuelve el cuerpo tal cual cuando la respuesta no es JSON", async () => {
     servidor.use(
       http.get(
@@ -93,66 +223,125 @@ describe("api/auth con MSW", () => {
     expect(respuesta).toBe("<html>Bad gateway</html>");
   });
 
-  // ¿Qué? Cada función de auth que hace un POST, con la ruta y el cuerpo que debe mandar.
+  // ¿Qué? Pedir el perfil sin haber iniciado sesión: el backend real responde 401 con
+  //       { detail: "No se pudieron validar las credenciales" }, capturado con curl sobre la BD de
+  //       pruebas en la semana 6. Es un GET, así que el handler usa http.get.
+  // ¿Para qué? Comprobar que getMe rechaza la promesa y que el texto llega en error.message.
+  // ¿Impacto? Tipo de doble: stub de red (MSW) con una respuesta REAL. Aquí no hay marca de sesión
+  //           guardada, así que axios.ts no intenta renovar la sesión ni redirige a /login.
+  it("getMe rechaza con el texto del servidor cuando no hay sesión (401)", async () => {
+    // Arrange
+    servidor.use(
+      http.get(`${API_BASE_URL}/api/v1/users/me`, () =>
+        HttpResponse.json({ detail: "No se pudieron validar las credenciales" }, { status: 401 }),
+      ),
+    );
+
+    // Act
+    const intento = getMe();
+
+    // Assert
+    await expect(intento).rejects.toMatchObject({
+      response: { status: 401 },
+      message: "No se pudieron validar las credenciales",
+    });
+  });
+
+  // ¿Qué? Cada función de auth que hace un POST, con la ruta y el cuerpo que debe mandar, más el
+  //       estado HTTP y el mensaje que el backend real responde en esa ruta.
   // ¿Para qué? Comprobar que cada una le pega al endpoint correcto y devuelve el mensaje del servidor.
+  //           Antes todas respondían 200 con "ok", pero el backend real (semana 6, capturado con
+  //           curl sobre la BD de pruebas) responde un texto distinto en cada ruta, y 201 en el registro.
+  // ¿Impacto? Tipo de doble: stub de red (MSW). Los textos son copia de lo que responde el backend hoy:
+  //           si cambian allá, este handler queda desactualizado y hay que volver a capturarlos.
   it.each([
     [
       "registerUser",
       "register",
       () => registerUser({ correo_electronico: "a@b.co" } as never),
       { correo_electronico: "a@b.co" },
+      201,
+      "Registro recibido. Revisa tu correo para activar tu cuenta.",
     ],
-    ["refreshToken", "refresh", () => refreshToken(), null],
-    ["logoutUser", "logout", () => logoutUser(), null],
+    ["refreshToken", "refresh", () => refreshToken(), null, 200, "Sesión renovada correctamente"],
+    ["logoutUser", "logout", () => logoutUser(), null, 200, "Sesión cerrada correctamente"],
     [
       "forgotPassword",
       "forgot-password",
       () => forgotPassword({ email: "a@b.co" }),
       { email: "a@b.co" },
+      200,
+      "Si el email está registrado, recibirás un enlace de recuperación",
     ],
     [
       "resetPassword",
       "reset-password",
       () => resetPassword({ token: "t", new_password: "N1!" }),
       { token: "t", new_password: "N1!" },
+      200,
+      "Contraseña restablecida exitosamente",
     ],
-    ["verifyEmail", "verify-email", () => verifyEmail("tok-1"), { token: "tok-1" }],
+    [
+      "verifyEmail",
+      "verify-email",
+      () => verifyEmail("tok-1"),
+      { token: "tok-1" },
+      200,
+      "Email verificado exitosamente. Ya puedes iniciar sesión.",
+    ],
     [
       "changePassword",
       "change-password",
       () => changePassword({ current_password: "Vieja1!", new_password: "Nueva1!" }),
       { current_password: "Vieja1!", new_password: "Nueva1!" },
+      200,
+      "Contraseña actualizada exitosamente",
     ],
   ])(
     "%s hace POST a /auth/%s y devuelve el mensaje",
-    async (_nombre, ruta, llamar, cuerpoEsperado) => {
+    async (_nombre, ruta, llamar, cuerpoEsperado, estadoReal, mensajeReal) => {
       let cuerpoRecibido: unknown = null;
       servidor.use(
         http.post(`${API_BASE_URL}/api/v1/auth/${ruta}`, async ({ request }) => {
           const texto = await request.text();
           cuerpoRecibido = texto ? JSON.parse(texto) : null;
-          return HttpResponse.json({ message: "ok" });
+          return HttpResponse.json({ message: mensajeReal }, { status: estadoReal });
         }),
       );
 
       const respuesta = await llamar();
 
-      expect(respuesta).toEqual({ message: "ok" });
+      expect(respuesta).toEqual({ message: mensajeReal });
       expect(cuerpoRecibido).toEqual(cuerpoEsperado);
     },
   );
 
-  it("updateLocale manda el idioma en el cuerpo del PATCH", async () => {
+  // ¿Qué? El handler devuelve el usuario completo, igual que el backend real (capturado con curl sobre
+  //       la BD de pruebas, semana 6). Antes devolvía solo { locale: "en" }.
+  // ¿Para qué? Que el doble diga lo mismo que el backend y que la prueba también compruebe la respuesta,
+  //           no solo lo que la función envía.
+  // ¿Impacto? Tipo de doble: stub de red (MSW). Se exige solo locale con toMatchObject: los otros
+  //           campos son de adorno para esta prueba.
+  it("updateLocale manda el idioma en el cuerpo del PATCH y devuelve el usuario con ese idioma", async () => {
     let cuerpoRecibido: unknown;
     servidor.use(
       http.patch(`${API_BASE_URL}/api/v1/users/me/locale`, async ({ request }) => {
         cuerpoRecibido = await request.json();
-        return HttpResponse.json({ locale: "en" });
+        return HttpResponse.json({
+          id: "2f06e47e-ed73-49d6-97f0-f59f35977345",
+          email: "residente.prueba@verdeapp.com",
+          role_id: 2,
+          is_active: true,
+          first_name: "RESIDENTE",
+          last_name: "DE PRUEBA",
+          locale: "en",
+        });
       }),
     );
 
-    await updateLocale("en");
+    const respuesta = await updateLocale("en");
 
     expect(cuerpoRecibido).toEqual({ locale: "en" });
+    expect(respuesta).toMatchObject({ locale: "en" });
   });
 });
