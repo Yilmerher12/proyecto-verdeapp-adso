@@ -247,3 +247,53 @@ el texto de respaldo y no es el teléfono de ninguna ECA.
 - #664 (esta tarjeta): cargar las ECA del Excel a la base de datos y paginar el directorio.
 - #665: cambiar el aviso del directorio con esta fuente y la confirmación de entrega.
 - #666: mostrar las ECA en un mapa.
+
+---
+
+## Actualización 2026-11-16 (tercera petición a la UAESP, pendiente de respuesta)
+
+<!--
+  ¿Qué? Registro de la tercera petición que el equipo le hizo a la UAESP (radicado
+        20267000909842) para aclarar el inventario de 799 ECA que entregó en el oficio
+        20265000341921, y de lo que se decidió mientras responden.
+  ¿Para qué? Que el equipo sepa que hay una pregunta abierta sobre el dato, qué se preguntó
+             y qué hacer cuando llegue la respuesta, sin tener que reconstruirlo.
+  ¿Impacto? No cambia código ni base de datos. Mientras la UAESP no responda, la aplicación
+            sigue mostrando el inventario tal como se entregó.
+-->
+
+**Radicado:** UAESP 20267000909842, enviado el 2026-11-16 por Bogotá Te Escucha, el mismo canal
+de las dos peticiones anteriores. **Estado: sin respuesta** al 2026-11-26. El número de
+verificación del radicado lo guarda quien hizo la petición y no se escribe aquí. Las respuestas
+anteriores tardaron unos 13 días, así que se espera hacia finales de noviembre o principios de
+diciembre de 2026.
+
+### Qué se preguntó
+
+La petición pide aclarar el inventario de 799 ECA (oficio 20265000341921), porque el Excel no
+dice qué es cada fila ni su estado:
+
+- **Filas con nombre de chatarrería o bodega.** En el CSV cargado hay 39 filas con
+  «CHATARRERIA» en el nombre, 14 con «BODEGA» y 2 con «DEPOSITO». La UAESP clasifica las
+  bodegas privadas aparte de las ECA (ver `investigacion-tipos-puntos-acopio.md`), así que
+  se pregunta si esas filas son de verdad ECA del inventario de la Resolución 698.
+- **Organización «NO APLICA» o vacía.** Son 102 filas (76 «NO APLICA» y 26 vacías en el Excel
+  original; en el CSV cargado las 102 quedan con la organización vacía, se guardan sin organización y
+  la pantalla simplemente no muestra ese dato).
+- **Funciones y materiales** que recibe cada ECA.
+- **Responsable y contacto** de cada ECA.
+- **Estado de funcionamiento y fecha de corte** del inventario.
+
+### Qué se decidió mientras tanto
+
+- **No se oculta ni se cambia nada en la aplicación.** El inventario se muestra tal como la
+  UAESP lo entregó, con el aviso de que estar en la lista no garantiza que la ECA esté abierta
+  hoy (issue #665). La UAESP es la fuente que emite el inventario, así que es quien debe
+  aclararlo; el equipo no puede decidir por su cuenta que una fila «no es una ECA».
+
+### Qué hacer cuando llegue la respuesta
+
+1. Anotar aquí el oficio de respuesta (solo su número; los oficios traen datos personales).
+2. Decidir qué hacer con las filas de chatarrerías, depósitos y bodegas: dejarlas, marcarlas
+   con un tipo distinto o quitarlas del directorio.
+3. Si la UAESP da estado y fecha de corte, mostrarlos en la ficha del punto.
