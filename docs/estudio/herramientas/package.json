@@ -1,0 +1,15 @@
+{
+  "name": "verdeapp-documentos-de-estudio",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.0.9",
+  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "pdf": "node generar-pdf.mjs"
+  },
+  "dependencies": {
+    "markdown-it": "15.0.3",
+    "mermaid": "12.3.0",
+    "playwright-core": "1.65.0"
+  }
+}

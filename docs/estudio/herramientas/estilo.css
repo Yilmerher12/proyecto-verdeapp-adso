@@ -1,0 +1,232 @@
+/*
+  ¿Qué? Hoja de estilo de los PDF de estudio: portada, títulos, tablas, citas, código y diagramas.
+  ¿Para qué? Que los 5 documentos se vean como parte de VerdeApp (verde del proyecto, solo
+            letra sans-serif, sin degradados) y no como un PDF genérico de un editor.
+  ¿Impacto? Los colores son los de la escala `accent` del frontend (`fe/src/index.css`, que apunta
+            a `green`). Si el equipo cambia el verde de la app, se cambia aquí, en un solo lugar.
+*/
+
+:root {
+  --verde-50: #f0fdf4;
+  --verde-100: #dcfce7;
+  --verde-200: #bbf7d0;
+  --verde-600: #16a34a;
+  --verde-700: #15803d;
+  --verde-800: #166534;
+  --verde-900: #14532d;
+  --texto: #1f2937;
+  --texto-suave: #6b7280;
+  --linea: #d1e7d9;
+}
+
+/* Hoja A4. La primera página (la portada) no lleva margen ni número. */
+@page {
+  size: A4;
+  margin: 20mm 17mm 22mm;
+  @bottom-center {
+    content: "VerdeApp · Documentos de estudio · página " counter(page) " de " counter(pages);
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 8pt;
+    color: #6b7280;
+  }
+}
+@page :first {
+  margin: 0;
+  @bottom-center {
+    content: none;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.5;
+  color: var(--texto);
+}
+
+/* ---------- Portada ---------- */
+.portada {
+  height: 297mm;
+  background: var(--verde-800);
+  color: #ffffff;
+  padding: 26mm 22mm 22mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  break-after: page;
+}
+.portada img.logo {
+  width: 78mm;
+  height: auto;
+}
+.portada .etiqueta {
+  font-size: 11pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--verde-200);
+  margin: 0 0 6mm;
+}
+.portada h1 {
+  font-size: 34pt;
+  line-height: 1.15;
+  margin: 0 0 8mm;
+  font-weight: 700;
+}
+.portada .resumen {
+  font-size: 13pt;
+  line-height: 1.5;
+  color: var(--verde-100);
+  max-width: 140mm;
+  margin: 0;
+}
+.portada .pie {
+  font-size: 10pt;
+  color: var(--verde-200);
+  border-top: 1px solid var(--verde-600);
+  padding-top: 5mm;
+}
+
+/* ---------- Texto ---------- */
+/* Un `# Parte N` dentro del texto separa bloques grandes del documento */
+main h1 {
+  font-size: 22pt;
+  color: var(--verde-900);
+  background: var(--verde-100);
+  border-left: 6px solid var(--verde-700);
+  padding: 4mm 5mm;
+  margin: 12mm 0 4mm;
+  break-after: avoid;
+}
+main h1:not(:first-of-type) {
+  break-before: page;
+}
+h2 {
+  font-size: 17pt;
+  color: var(--verde-800);
+  border-bottom: 2px solid var(--verde-600);
+  padding-bottom: 2mm;
+  margin: 9mm 0 4mm;
+  break-after: avoid;
+}
+h3 {
+  font-size: 12.5pt;
+  color: var(--verde-700);
+  margin: 6mm 0 2mm;
+  break-after: avoid;
+}
+h4 {
+  font-size: 11pt;
+  color: var(--verde-900);
+  margin: 4mm 0 1mm;
+  break-after: avoid;
+}
+p {
+  margin: 0 0 3mm;
+}
+ul,
+ol {
+  margin: 0 0 3mm;
+  padding-left: 6mm;
+}
+li {
+  margin-bottom: 1mm;
+}
+strong {
+  color: var(--verde-900);
+}
+a {
+  color: var(--verde-700);
+  text-decoration: none;
+}
+hr {
+  border: 0;
+  border-top: 1px solid var(--linea);
+  margin: 6mm 0;
+}
+
+/* ---------- Tablas ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 3mm 0 5mm;
+  font-size: 9.5pt;
+}
+th {
+  background: var(--verde-700);
+  color: #ffffff;
+  text-align: left;
+  padding: 2mm 2.5mm;
+  font-weight: 600;
+}
+td {
+  padding: 2mm 2.5mm;
+  border-bottom: 1px solid var(--linea);
+  vertical-align: top;
+}
+tr {
+  break-inside: avoid;
+}
+tbody tr:nth-child(even) td {
+  background: #f6fbf8;
+}
+
+/* ---------- Citas: sirven para "Lo que debes saber" y avisos ---------- */
+blockquote {
+  margin: 3mm 0 5mm;
+  padding: 3mm 4mm;
+  background: var(--verde-50);
+  border-left: 4px solid var(--verde-600);
+  border-radius: 0 2mm 2mm 0;
+  break-inside: avoid;
+}
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Código y diagramas ---------- */
+code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 9pt;
+  background: #f1f5f2;
+  padding: 0.3mm 1.2mm;
+  border-radius: 1mm;
+}
+pre {
+  background: #f1f5f2;
+  border: 1px solid var(--linea);
+  border-radius: 2mm;
+  padding: 3mm;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  break-inside: avoid;
+}
+pre code {
+  background: none;
+  padding: 0;
+}
+.diagrama {
+  margin: 4mm 0 6mm;
+  text-align: center;
+  break-inside: avoid;
+}
+.diagrama svg {
+  max-width: 100%;
+  max-height: 115mm;
+  width: auto;
+  height: auto;
+}
+/* Un título o una frase introductoria nunca quedan solos al final de una página */
+h2 + p,
+h3 + p,
+p:has(+ .diagrama),
+p:has(+ table) {
+  break-after: avoid;
+}
+img {
+  max-width: 100%;
+}
