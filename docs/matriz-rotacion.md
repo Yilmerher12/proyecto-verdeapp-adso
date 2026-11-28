@@ -14,10 +14,10 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Yilmer Hernández Camargo (@Yilmerher12) | E2E ([#467](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/467)) | E2E ([#586](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/586)) | Front: ProfilePage ([#637](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/637)) | API ([#676](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/676)) | | Front | | | |
-| Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | API ([#609](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/609)) | Front: LoginPage ([#614](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/614)) | E2E ([#658](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/658)) | | BD | | | |
+| Yilmer Hernández Camargo (@Yilmerher12) | E2E ([#467](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/467)) | E2E ([#586](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/586)) | Front: ProfilePage ([#637](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/637)) | API ([#676](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/676)) | BD ([#692](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/692)) | Front | | | |
+| Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | API ([#609](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/609)) | Front: LoginPage ([#614](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/614)) | E2E ([#658](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/658)) | API ([#663](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/663)) | BD | | | |
 | Juan Carlos Barajas (@Juanbarajas90) | E2E | BD ([#592](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/592)) | Front: AceptarInvitacionPage ([#638](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/638), hecho por Yilmer) | Front ([#669](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/669)) | E2E ([#714](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/714)) | API | | | |
-| José Guerrero (@josperaes-dotcom) | E2E | Front | Front: InvitarAdminConjuntoForm ([#631](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/631), hecho por Yordan) | BD ([#695](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/695), hecho por Yordan) | | E2E | | | |
+| José Guerrero (@josperaes-dotcom) | E2E | Front | Front: InvitarAdminConjuntoForm ([#631](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/631), hecho por Yordan) | BD ([#695](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/695), hecho por Yordan) | Front ([#696](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/696)) | E2E | | | |
 
 ## Cobertura semanal
 
@@ -29,6 +29,7 @@ Anota la cobertura real al cerrar cada semana. El umbral de la semana siguiente 
 | S2 (cierre, 3 de noviembre de 2026) | 86.4 | 97.17 | Frontend 86 · Backend 96 (sin cambio) |
 | S3 (cierre, 10 de noviembre de 2026) | 89.36 | 97.24 | Frontend 89 · Backend 97 |
 | S4 (cierre, 24 de noviembre de 2026) | 89.41 | 97.54 | Frontend 89 · Backend 97 (sin cambio) |
+| S5 (cierre, 28 de noviembre de 2026) | 89.91 | 97.56 | Frontend 89 / 88 / 84 / 83 (líneas, sentencias, ramas, funciones) · Backend 97 (sin cambio) |
 
 > La línea base ya supera el piso del 80% del bootcamp en el backend: el proyecto venía con pruebas de API contra la BD real (`be/app/tests/`) y de componentes React (`fe/src/__tests__/`). Lo que no tenía era E2E (carpeta `e2e/`, creada en S1).
 
@@ -37,6 +38,8 @@ Anota la cobertura real al cerrar cada semana. El umbral de la semana siguiente 
 > **Cierre de S3 (10 de noviembre de 2026):** medido sobre `develop` (commit `df5be42`) con todos los PR de la semana fusionados. Frontend: 89.36 % de líneas (sentencias 87.62, ramas 84.7 y funciones 83.14) con 1062 pruebas en verde. Backend: 97.24 % de líneas con 981 pruebas en verde. Los umbrales pasaron en el PR [#639](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/639) a 89 / 87 / 84 / 83 en `fe/vite.config.ts` y a 97 en `be/pyproject.toml`.
 
 > **Cierre de S4 (24 de noviembre de 2026):** el reto de la semana 4 pedía un piso de 50 %, que ya estaba superado. Backend: 97.54 % de líneas con 1046 pruebas en verde, medido sobre la rama del PR [#658](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/658) al día con `develop` (con los PR [#676](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/676), [#669](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/669) y [#695](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/695) integrados). Frontend: 89.41 % de líneas (sentencias 87.62, ramas 84.69 y funciones 83.19) con 1124 pruebas, medido el 20 de noviembre sobre `develop`; la semana 4 no agregó pruebas de frontend. Los umbrales no cambian: 97 en `be/pyproject.toml` y 89 / 87 / 84 / 83 en `fe/vite.config.ts` (la cobertura real, redondeada hacia abajo, da lo mismo).
+
+> **Cierre de S5 (28 de noviembre de 2026):** el reto de la semana 5 pedía un piso de 60 %, que ya estaba superado. Medido sobre `develop` con los PR #663, #692 y #696 integrados: frontend 89.91 % de líneas (sentencias 88.11, ramas 84.71 y funciones 83.97 en el CI) con 1140 pruebas en verde, y backend 97.56 % con 1049 pruebas en verde. El PR [#715](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/715) subió los umbrales de `fe/vite.config.ts` a 89 / 88 / 84 / 83 (solo sube sentencias, de 87 a 88). Las funciones se dejaron en 83 porque el CI midió 83.97 y un equipo local 84.03. El umbral de `be/pyproject.toml` (97) no cambia.
 
 ### Retos sugeridos para la capa Front
 
