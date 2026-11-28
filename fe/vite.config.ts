@@ -62,10 +62,12 @@ export default defineConfig({
       //       de 2026: cobertura real 86.4 / 84.9 / 82.9 / 81.2 (líneas, sentencias, ramas y
       //       funciones), redondeada hacia abajo. Cierre de la semana 3, 10 de noviembre de 2026:
       //       cobertura real 89.36 / 87.62 / 84.7 / 83.14, redondeada hacia abajo (89 / 87 / 84 / 83).
+      //       Cierre de la semana 5: cobertura real 89.91 / 88.11 / 84.71 / 84.03, redondeada hacia
+      //       abajo (89 / 88 / 84 / 84).
       // ¿Para qué? Si la cobertura baja de aquí, "pnpm test" falla — y con
       //           él el job de frontend del CI, que bloquea el PR.
       // ¿Impacto? Solo se sube, nunca se baja (ver docs/matriz-rotacion.md).
-      thresholds: { lines: 89, statements: 87, branches: 84, functions: 83 },
+      thresholds: { lines: 89, statements: 88, branches: 84, functions: 84 },
     },
   },
 });
