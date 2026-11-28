@@ -16,7 +16,7 @@ Reglas:
 |---|---|---|---|---|---|---|---|---|---|
 | Yilmer Hernández Camargo (@Yilmerher12) | E2E ([#467](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/467)) | E2E ([#586](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/586)) | Front: ProfilePage ([#637](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/637)) | API ([#676](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/676)) | | Front | | | |
 | Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | API ([#609](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/609)) | Front: LoginPage ([#614](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/614)) | E2E ([#658](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/658)) | | BD | | | |
-| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD ([#592](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/592)) | Front: AceptarInvitacionPage ([#638](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/638), hecho por Yilmer) | Front ([#669](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/669)) | | API | | | |
+| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD ([#592](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/592)) | Front: AceptarInvitacionPage ([#638](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/638), hecho por Yilmer) | Front ([#669](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/669)) | E2E | API | | | |
 | José Guerrero (@josperaes-dotcom) | E2E | Front | Front: InvitarAdminConjuntoForm ([#631](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/631), hecho por Yordan) | BD ([#695](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/695), hecho por Yordan) | | E2E | | | |
 
 ## Cobertura semanal
